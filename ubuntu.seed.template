@@ -1,0 +1,176 @@
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+### Pre Install
+
+# Command Line 1: This is necessary otherwise you will be prompted to umount /dev/sda. See Ubuntu bug #1347726.
+d-i preseed/early_command string \
+    umount /media || true
+
+### Localization
+
+d-i debian-installer/country string US
+d-i debian-installer/locale string en_US.UTF-8
+d-i debian-installer/language string en
+
+### Keyboard
+
+# Disable automatic (interactive) keymap detection.
+d-i console-setup/ask_detect boolean false
+d-i console-setup/layoutcode string us
+d-i console-setup/variantcode string
+d-i keyboard-configuration/layoutcode string us
+
+### Network configuration - SKIPPED
+#   Install interface and vlan are provided in kernel boot options
+#   Install IP information, name, and domain are provided by dhcp
+#   Final network configuration is done in Post Install to address bonding, etc
+
+### Mirror
+
+d-i mirror/country string manual
+d-i mirror/http/proxy manual
+
+### Clock and Time Zone
+
+# Controls whether to use NTP to set the clock during the install
+d-i clock-setup/ntp boolean true
+d-i clock-setup/ntp-server string @@SRV_NTP@@
+
+# You may set this to any valid setting for $TZ; see the contents of
+# /usr/share/zoneinfo/ for valid values.
+d-i time/zone string UTC
+
+# Controls whether or not the hardware clock is set to UTC.
+d-i clock-setup/utc boolean true
+
+### Partitioning
+
+# If one of the disks that are going to be automatically partitioned
+# contains an old LVM configuration, the user will normally receive a
+# warning. This can be preseeded away...
+d-i partman-lvm/device_remove_lvm boolean true
+
+# The same applies to pre-existing software RAID array:
+d-i partman-md/device_remove_md boolean true
+
+# And the same goes for the confirmation to write the lvm partitions.
+d-i partman-lvm/confirm boolean true
+d-i partman-lvm/confirm_nooverwrite boolean true
+
+d-i partman-auto/method string lvm
+d-i partman-auto/disk string /dev/@@SRV_BOOT_DEVICE@@
+
+# For LVM partitioning, you can select how much of the volume group to use
+d-i partman-auto-lvm/guided_size string max
+
+# You can choose one of the three predefined partitioning recipes:
+# - atomic: all files in one partition
+# - home:   separate /home partition
+# - multi:  separate /home, /var, and /tmp partitions
+d-i partman-auto/choose_recipe select atomic
+
+# This makes partman automatically partition without confirmation.
+d-i partman-md/confirm boolean true
+d-i partman-partitioning/confirm_write_new_label boolean true
+d-i partman/choose_partition select finish
+d-i partman/confirm boolean true
+d-i partman/confirm_nooverwrite boolean true
+d-i partman-efi/non_efi_system boolean true
+
+## Controlling how partitions are mounted
+# The default is to mount by UUID, but you can also choose "traditional" to
+# use traditional device names, or "label" to try filesystem labels before
+# falling back to UUIDs.
+d-i partman/mount_style select traditional
+
+### Packages
+
+# disable APT to autoupdate during iso installation
+d-i apt-setup/use_mirror boolean false
+d-i apt-setup/services-select-ubuntu multiselect ""
+
+# Package selection
+tasksel tasksel/first multiselect standard, server, openssh-server, python-minimal
+
+# Individual additional packages to install
+d-i pkgsel/include string vim git ethtool ntp ifenslave vlan curl \
+    build-essential python open-vm-tools man-db autofs libpam-cracklib \
+    sysstat snmpd snmp tcpdump ntpdate libaio1 lvm2 at gcc
+
+# Whether to upgrade packages after debootstrap.
+# Allowed values: none, safe-upgrade, full-upgrade
+d-i pkgsel/upgrade select none
+
+# Policy for applying updates. May be "none" (no automatic updates)
+d-i pkgsel/update-policy select none
+
+# Some versions of the installer can report back on what software you have
+# installed, and what software you use. The default is not to report back,
+# but sending reports helps the project determine what software is most
+# popular and include it on CDs.
+popularity-contest popularity-contest/participate boolean false
+
+### Users and Password
+
+# Skip creation of a root account (normal user account will be able to
+# use sudo). The default is false; preseed this to true if you want to set
+# a root password.
+d-i passwd/root-login boolean true
+
+# Alternatively, to skip creation of a normal user account.
+d-i passwd/make-user boolean false
+
+# The installer will warn about weak passwords. If you are sure you know
+# what you're doing and want to override it, uncomment this.
+d-i user-setup/allow-password-weak boolean true
+
+# Root password, either in clear text
+d-i passwd/root-password password @@SRV_PWD@@
+d-i passwd/root-password-again password @@SRV_PWD@@
+
+### Bootloader
+
+# This is fairly safe to set, it makes grub install automatically to the MBR
+# if no other operating system is detected on the machine.
+d-i grub-installer/only_debian boolean true
+d-i grub-installer/with_other_os boolean true
+
+### Post Install
+
+# Command Line 1: Allow root to SSH.
+d-i pkgsel/update-policy select none
+d-i finish-install/reboot_in_progress note
+d-i preseed/late_command string \
+    in-target /bin/sed -i 's/^PermitRootLogin .*$/PermitRootLogin yes/g' /etc/ssh/sshd_config; \
+    in-target /bin/sed -i 's/^server /#server /g' /etc/ntp.conf; \
+    in-target /bin/sed -i 's/^pool /#pool /g' /etc/ntp.conf; \
+    in-target /bin/bash -c '/bin/echo "server @@SRV_NTP@@" >> /etc/ntp.conf'; \
+    in-target /bin/bash -c '/bin/echo "8021q" >> /etc/modules'; \
+    in-target /bin/bash -c 'mv /etc/network/interfaces /etc/network/interfaces.save'; \
+    in-target /bin/bash -c 'grep -A2 -B10 "^auto lo" /etc/network/interfaces.save > /etc/network/interfaces'; \
+    in-target /bin/bash -c 'echo -n -e "auto @@SRV_SLAVE1@@\niface @@SRV_SLAVE1@@ inet manual\n    bond-master bond0\n    mtu @@SRV_MTU@@\n\n" >> /etc/network/interfaces'; \
+    in-target /bin/bash -c 'echo -n -e "auto @@SRV_SLAVE2@@\niface @@SRV_SLAVE2@@ inet manual\n    bond-master bond0\n    mtu @@SRV_MTU@@\n\n" >> /etc/network/interfaces'; \
+    in-target /bin/bash -c 'echo -n -e "auto bond0\niface bond0 inet manual\n    bond-mode 4\n" >> /etc/network/interfaces'; \
+    in-target /bin/bash -c 'echo -n -e "    bond-miimon 100\n    bond-slaves @@SRV_SLAVE1@@ @@SRV_SLAVE2@@\n    mtu @@SRV_MTU@@\n\n" >> /etc/network/interfaces'; \
+    in-target /bin/bash -c 'echo -n -e "auto @@SRV_BOND@@.@@SRV_VLAN@@\niface @@SRV_BOND@@.@@SRV_VLAN@@ inet static\n    address @@SRV_IP@@\n    netmask @@SRV_NETMASK@@\n" >> /etc/network/interfaces'; \
+    in-target /bin/bash -c 'echo -n -e "    gateway @@SRV_GATEWAY@@\n    dns-nameservers @@SRV_DNS@@\n    dns-search @@SRV_DNSSEARCH@@\n    vlan-raw-device @@SRV_BOND@@\n    mtu @@SRV_MTU@@\n" >> /etc/network/interfaces'; \
+    in-target /bin/bash -c 'curl http://@@BUILD_WEBIP@@:@@BUILD_WEBPORT@@/sources.list > /etc/apt/sources.list'; \
+    in-target /bin/bash -c 'curl http://@@BUILD_WEBIP@@:@@BUILD_WEBPORT@@/@@SRV_NAME@@.firstboot.sh > /root/@@SRV_NAME@@.firstboot.sh; chmod +x /root/@@SRV_NAME@@.firstboot.sh';
+
+### Finish
+# Reboot after the install is finished.
+d-i finish-install/reboot_in_progress note
+
+

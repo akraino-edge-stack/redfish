@@ -1,0 +1,26 @@
+<!-- Copyright 2018 AT&T Intellectual Property.  All other rights reserved.   -->
+<!--                                                                          -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License");          -->
+<!-- you may not use this file except in compliance with the License.         -->
+<!-- You may obtain a copy of the License at                                  -->
+<!--                                                                          -->
+<!--     http://www.apache.org/licenses/LICENSE-2.0                           -->
+<!--                                                                          -->
+<!-- Unless required by applicable law or agreed to in writing, software      -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,        -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. -->
+<!-- See the License for the specific language governing permissions and      -->
+<!-- limitations under the License.                                           -->
+<!--                                                                          -->
+<SystemConfiguration Model="PowerEdge R740" ServiceTag="XXXXXXX" TimeStamp="Thu Jun  8 11:05:19 2018">
+    <!--Export type is Clone,Selective-->
+    <Component FQDD="BIOS.Setup.1-1">
+        <Attribute Name="HttpDev1Interface">@@SRV_HTTP_BOOT_DEV@@</Attribute>
+        <Attribute Name="HttpDev1Protocol">IPv4</Attribute>
+        <Attribute Name="HttpDev1VlanEnDis">Enabled</Attribute>
+        <Attribute Name="HttpDev1VlanId">@@SRV_VLAN@@</Attribute>
+        <Attribute Name="HttpDev1VlanPriority">0</Attribute>
+        <Attribute Name="HttpDev1Uri">@@SRV_IPXE_URL@@</Attribute>
+        <Attribute Name="UefiBootSeq">Disk.Virtual.0:RAID.Slot.6-1, NIC.HttpDevice.1-1, NIC.PxeDevice.1-1</Attribute>
+    </Component>
+</SystemConfiguration>

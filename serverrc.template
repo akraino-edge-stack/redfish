@@ -1,0 +1,80 @@
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Add proxy settings if required for your environment
+# export http_proxy=http://your.proxy.com:8080/
+# export https_proxy=http://your.proxy.com:8080/
+#
+
+# Set the ip and port to use when creating the web server
+BUILD_WEBIP=192.168.2.5
+BUILD_WEBPORT=8090
+
+# host name for server
+SRV_NAME=aknode44
+
+# server oem - Dell or HPE (case sensitive)
+SRV_OEM=Dell
+
+# out of band interface information for server (idrac/ilo/etc)
+SRV_OOB_IP=192.168.41.254
+SRV_OOB_USR=root
+SRV_OOB_PWD=calvin
+
+# mac address of server to be used during the build - not required for Dell servers
+# SRV_MAC=3c:fd:fe:b8:10:60
+
+# name of network interface used during build when ipxe.efi is booted and when os is booted
+# ipxe numbers ports from 0-n in pci bus order. 
+# the netx value will depend on how many nics are in the server 
+# and which pci device number is assigned to the slot
+SRV_IPXE_INF=net4
+
+# the build interface is the nic used by the Ubuntu installed to load the OS
+SRV_BLD_INF=enp94s0f0
+
+# the boot device is the device name on which the OS will be loaded
+SRV_BOOT_DEVICE=sda
+
+# ipxe script to use - based on the os version and kernel to install
+# valid options are script-hwe-16.04.4-amd64.ipxe or script-16.04.4-amd64.ipxe
+SRV_BLD_SCRIPT=script-hwe-16.04.4-amd64.ipxe
+
+# template xml file to set bios and raid configuration settings
+SRV_BIOS_TEMPLATE=dell_r740_g14_uefi_base.xml.template
+SRV_BOOT_TEMPLATE=dell_r740_g14_uefi_httpboot.xml.template
+SRV_HTTP_BOOT_DEV=NIC.Slot.3-1-1
+
+# VLAN to use during build and for final network configuration
+SRV_VLAN=41
+
+# basic network information for dhcp config and final server network settings
+SRV_MTU=9000
+SRV_IP=192.168.2.44
+SRV_SUBNET=192.168.2.0
+SRV_NETMASK=255.255.255.0
+SRV_GATEWAY=192.168.2.200
+SRV_DNS=192.168.2.85
+SRV_DOMAIN=lab.akraino.org
+SRV_DNSSEARCH=lab.akraino.org
+SRV_NTP=ntp.ubuntu.org
+
+# root password for server being built
+SRV_PWD=akraino,d
+
+# network bond information
+SRV_BOND=bond0
+SRV_SLAVE1=enp94s0f0
+SRV_SLAVE2=enp94s0f1
+

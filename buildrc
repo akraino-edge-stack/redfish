@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# NOTE: User will need to update up the required environment variables
+# before executing the build scripts if they differ from the default values.
+
+# SET DEFAULT VALUES
+export IPXE_GIT=${IPXE_GIT:-http://git.ipxe.org/ipxe.git}
+export REDFISH_GIT=${REDFISH_GIT:-http://gerrit.att-akraino.org/redfish.git}
+export DELL_GIT=${DELL_GIT:-https://github.com/dell/iDRAC-Redfish-Scripting.git}
+export IPXE_GIT=${IPXE_GIT:-http://git.ipxe.org/ipxe.git}
+
+export REDFISH_ROOT=${REDFISH_ROOT:-/opt/akraino}
+export WEB_ROOT=${WEB_ROOT:-$REDFISH_ROOT/www}
+export DHCP_ROOT=${DHCP_ROOT:-$REDFISH_ROOT/dhcp}
+export TOOLS_ROOT=${TOOLS_ROOT:-$REDFISH_ROOT/tools}
+export DELL_ROOT=${DELL_ROOT:-$REDFISH_ROOT/dell}
+export REGION_ROOT=${REGION_ROOT:-$WEB_ROOT/region}
+export BUILD_ROOT=${BUILD_ROOT:-$REDFISH_ROOT/server-config}
+export IPXE_ROOT=${IPXE_ROOT:-$REDFISH_ROOT/ipxe}
+
+export UBUNTU_URL=${UBUNTU_URL:-http://releases.ubuntu.com/16.04/ubuntu-16.04.4-server-amd64.iso}
+

@@ -1,0 +1,53 @@
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# default settings
+default-lease-time 600;
+max-lease-time 7200;
+
+# local dhcp options used to tell ixpe the web server path and server interface name
+option ipxe-web-server code 128 = string;
+option ipxe-interface code 129 = string;
+
+##########################################################################
+# subnet and host entry examples
+# use filename to point to the ubuntu os version desired
+#
+#subnet 192.168.2.0 netmask 255.255.255.0 {
+#    option subnet-mask 255.255.255.0;
+#    option routers 192.168.2.85;
+#    option domain-name-servers 135.25.120.104, 192.168.2.5;
+#    option domain-name lab.akraino.org;
+#    option ipxe-web-server 192.168.2.5:8090;
+#}
+#host server10 {
+#    hardware ethernet 3c:fd:fe:b8:10:60;
+#    fixed-address 192.168.2.10;
+#    option host-name server10;
+#    option ipxe-interface enp135s0f0;
+#    if substring (option vendor-class-identifier,0,9) = "PXEClient" {
+#        filename "http://192.168.2.5:8090/script-hwe-16.04.4-amd64.ipxe";
+#    }
+#}
+#host server11 {
+#    hardware ethernet 3c:fd:fe:b8:02:90;
+#    fixed-address 192.168.2.11;
+#    option host-name server10;
+#    option ipxe-interface enp135s0f0;
+#    if substring (option vendor-class-identifier,0,9) = "PXEClient" {
+#        filename "http://192.168.2.5:8090/script-hwe-16.04.4-amd64.ipxe";
+#    }
+#}
+#
