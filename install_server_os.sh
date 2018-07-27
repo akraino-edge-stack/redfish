@@ -91,6 +91,7 @@ fi
 IPXE_VLAN=$SRV_VLAN
 IPXE_INTF=$SRV_IPXE_INF
 IPXE_URL=http://$BUILD_WEBIP:$BUILD_WEBPORT/ipxe-$SRV_IPXE_INF-$SRV_VLAN.efi
+SRV_FIRSTBOOT_TEMPLATE=${SRV_FIRSTBOOT_TEMPLATE:-firstboot.sh.template}
 
 if [ -z "$NO_CONFIRM" ]; then
     echo ""
@@ -170,7 +171,7 @@ fi
 
 ## ADD FIRSTBOOT SCRIPT TO WEB ROOT
 echo "Adding firstboot script [$SRV_NAME.firstboot.sh] to web root [$WEB_ROOT]"
-cp -f $TOOLS_ROOT/firstboot.sh.template $WEB_ROOT/$SRV_NAME.firstboot.sh
+cp -f $TOOLS_ROOT/$SRV_FIRSTBOOT_TEMPLATE $WEB_ROOT/$SRV_NAME.firstboot.sh
 
 for VAR in $(set | grep -P "^SRV_|^BUILD_" | cut -f 1 -d'='); do
     sed -i -e "s|@@$VAR@@|${!VAR}|g" $WEB_ROOT/$SRV_NAME.firstboot.sh
@@ -179,7 +180,7 @@ done
 ## CHECK THAT ALL VALUES WERE REPLACED
 MISSING=$(grep -Po "@@.*?@@" $WEB_ROOT/$SRV_NAME.firstboot.sh | sort | uniq)
 if [ -n "$MISSING" ] ; then
-    echo "ERROR:  Required variable(s) in template [firstboot.sh.template] were not located in the resource file [$RCFILE]"
+    echo "ERROR:  Required variable(s) in template [$SRV_FIRSTBOOT_TEMPLATE] were not located in the resource file [$RCFILE]"
     echo ${MISSING//@@/} | xargs -n 1 | sed -e 's/^/        /g'
     exit 1
 fi

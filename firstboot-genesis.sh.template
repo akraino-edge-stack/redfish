@@ -27,23 +27,42 @@ echo " "
 
 echo "Updating available packages"
 apt-get update 
-apt-get install -y apt-transport-https
 
-echo "Adding docker source and key"
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -  
-echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" >/etc/apt/sources.list.d/kubernetes.list
+echo "Adding IP Tables Rules"
+echo 1 > /proc/sys/net/ipv4/ip_forward 
+iptables -t nat -A POSTROUTING -o bond0.41 -j MASQUERADE 
+iptables -A FORWARD -i bond0.41 -o eno3 -m state --state RELATED,ESTABLISHED -j ACCEPT 
+iptables -A FORWARD -i eno3 -o bond0.41 -j ACCEPT
 
-echo "Updating available packages"
-apt-get update &>/dev/null
+echo "Creating Ceph journal partition and filesystem"
+# create ceph journal partition and filesystem
 
-echo "Installing docker"
-apt-get install -y docker.io aufs-tools  2>&1
+devices=sdh
+size=320
 
-echo "Checking that docker is running"
-docker ps
+echo "creating partions for ceph journal:"
+echo $devices
 
-echo "Installing sshpass, python-requests and xorriso"
-apt-get install -y sshpass python-requests xorriso  2>&1
+for d in $devices
+do
+   parted -s /dev/${d} mklabel msdos
+   parted -s /dev/${d} -- mkpart primary ext4 1 ${size}
+done
+partprobe
+sleep 5 #let udev settle down
+
+devnum=1
+for d in $devices
+do
+   mountpoint=/var/lib/openstack-helm/ceph/journal/ceph${devnum}
+   mkfs -t ext4  /dev/${d}${devnum}
+   UUID=$(blkid -o export /dev/${d}${devnum} | sed -ne /^UUID/s/UUID=//p)
+   mkdir -p ${mountpoint}
+   echo "UUID=$UUID ${mountpoint} ext4 defaults,nofail 0 0" >>/etc/fstab
+   devnum=$((devnum+1))
+done
+
+/bin/mount -a
 
 exit
 
