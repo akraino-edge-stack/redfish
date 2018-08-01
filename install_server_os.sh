@@ -72,6 +72,11 @@ export NO_CONFIRM;
 export NO_APPLY_HW; 
 export RCFILE;
 
+# SETUP LOGGING 
+MYLOGFILE="`basename $0`-${RCFILE##*/}-`date -Im`.log" 
+exec 1> >(tee -a "$MYLOGFILE") 2>&1 
+echo "Logging to $MYLOGFILE"
+
 # SETUP TOOLS AND LOAD DEFAULT BUILD VARIABLES
 BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $BASEDIR/setup_tools.sh 1>&2
