@@ -18,8 +18,9 @@
 # before executing the build scripts if they differ from the default values.
 
 # SET DEFAULT VALUES
+export REDFISH_REPO=${REDFISH_REPO:-https://nexus.akraino.org/service/local/artifact/maven/redirect?r=snapshots&g=org.akraino.redfish&a=redfish&v=1.0.0-SNAPSHOT&e=tgz}
+
 export IPXE_GIT=${IPXE_GIT:-http://git.ipxe.org/ipxe.git}
-export REDFISH_GIT=${REDFISH_GIT:-http://gerrit.att-akraino.org/redfish.git}
 export DELL_GIT=${DELL_GIT:-https://github.com/dell/iDRAC-Redfish-Scripting.git}
 export IPXE_GIT=${IPXE_GIT:-http://git.ipxe.org/ipxe.git}
 

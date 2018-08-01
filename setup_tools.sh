@@ -71,8 +71,9 @@ fi
 
 ## DOWNLOAD TOOLS TO TOOLS_ROOT IF TOOLS FOLDER MISSING
 if [ ! -d "$TOOLS_ROOT" ]; then
-    echo "Cloning latest tools from [$REDFISH_GIT] to [$TOOLS_ROOT]"
-    git clone $REDFISH_GIT $TOOLS_ROOT
+    echo "Installing latest tools from [$REDFISH_REPO] to [$TOOLS_ROOT]"
+    mkdir -p $TOOLS_ROOT
+    curl -L $REDFISH_REPO | tar -xz -C $TOOLS_ROOT 
 fi
 if [ ! -f "$TOOLS_ROOT/boot.ipxe.template" ]; then
     echo "ERROR:  failed cloning tools from [$REDFISH_GIT] to [$TOOLS_ROOT]"
