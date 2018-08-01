@@ -73,7 +73,7 @@ fi
 if [ ! -d "$TOOLS_ROOT" ]; then
     echo "Installing latest tools from [$REDFISH_REPO] to [$TOOLS_ROOT]"
     mkdir -p $TOOLS_ROOT
-    curl -L $REDFISH_REPO | tar -xz -C $TOOLS_ROOT 
+    curl -L $REDFISH_REPO | tar -xzo -C $TOOLS_ROOT 
 fi
 if [ ! -f "$TOOLS_ROOT/boot.ipxe.template" ]; then
     echo "ERROR:  failed cloning tools from [$REDFISH_GIT] to [$TOOLS_ROOT]"
