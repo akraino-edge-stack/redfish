@@ -115,7 +115,7 @@ else
 fi
 
 echo "Beginning create and apply xlm file to server at" `date`
-STARTTIME=$(date +%s)
+STIME=$(date +%s)
 
 ## CREATE HARDWARE CONFIG XML FILE FOR USE WITH REDFISH
 echo "Creating server BIOS/RAID settings file [$BUILD_ROOT/$XMLFILE] for server [$SRV_NAME]"
@@ -153,7 +153,7 @@ else
 fi
 
 ## DONE
-ENDTIME=$(date +%s)
+ETIME=$(date +%s)
 echo "SUCCESS:  Completed update of BIOS/RAID settings on [$SRV_NAME] at" `date`
-echo "Elapsed time was $(( ($ENDTIME - $STARTTIME) / 60 )) minutes and $(( ($ENDTIME - $STARTTIME) % 60 )) seconds"
+echo "Elapsed time was $(( ($ETIME - $STIME) / 60 )) minutes and $(( ($ETIME - $STIME) % 60 )) seconds"
 

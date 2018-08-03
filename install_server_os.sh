@@ -27,6 +27,12 @@
 # SET DEFAULT VALUES
 UBUNTU_ISO=${UBUNTU_ISO:-}  ## IF NOT SET, UBUNTU_URL WILL BE USED TO DOWNLOAD DEFAULT ISO
 
+# SETUP LOGGING 
+#MYLOGFILE="`basename $0`-${RCFILE##*/}-`date -Im`.log" 
+MYLOGFILE="`basename $0`"; MYLOGFILE="${MYLOGFILE%.*}-`date -Im | sed -e 's/[+:]/-/g'`.log" 
+exec 1> >(tee -a "$MYLOGFILE") 2>&1 
+echo "Logging to $PWD/$MYLOGFILE"
+
 echo "Beginning $0 as user [$USER] in pwd [$PWD] with home [$HOME]"
 
 # default behavior will require confirmation before starting
@@ -72,11 +78,6 @@ export NO_CONFIRM;
 export NO_APPLY_HW; 
 export RCFILE;
 
-# SETUP LOGGING 
-MYLOGFILE="`basename $0`-${RCFILE##*/}-`date -Im`.log" 
-exec 1> >(tee -a "$MYLOGFILE") 2>&1 
-echo "Logging to $MYLOGFILE"
-
 # SETUP TOOLS AND LOAD DEFAULT BUILD VARIABLES
 BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $BASEDIR/setup_tools.sh 1>&2
@@ -86,10 +87,16 @@ if [ -n "$RCFILE" ] && [ -f "$RCFILE" ]; then
     source $RCFILE
 fi
 
-if [ -z "$SRV_NAME" ] || [ -z "$SRV_OOB_IP" ] || [ -z "$SRV_OOB_USR" ] || [ -z "$SRV_OOB_PWD" ] || [ -z "$SRV_IPXE_INF" ] || [ -z "$BUILD_WEBIP" ]; then
+if [ -z "$SRV_NAME" ] || [ -z "$SRV_OOB_IP" ] || [ -z "$SRV_OOB_USR" ] || [ -z "$SRV_OOB_PWD" ] || [ -z "$SRV_IPXE_INF" ] ; then
     echo "ERROR:  Invalid or missing variables in rcfile [$RCFILE]"
     echo "usage:  ./install_regionserver.sh  [--rc settingsfile] [--no-confirm] [--no-apply-hw] [--help]"
     exit 1
+fi
+
+## FIND BUILD_WEBIP IF NOT PROVIDED
+if [ -z "$BUILD_WEBIP" ]; then
+    BUILD_WEBIP=$(ip route get $SRV_IP | grep -o "src .*$" | cut -f 2 -d ' ')
+    echo "Using Build Web ip address [$BUILD_WEBIP]"
 fi
 
 # SET ADDITIONAL VARIABLES BASED ON RC FILE
@@ -253,7 +260,7 @@ host $SRV_NAME {
 }
 EOF
 
-## START DHCP SERVICE
+## START/RESTART DHCP SERVICE
 echo "Starting dhcp server using folder [$DHCP_ROOT] on interface [$BUILD_INTERFACE]"
 docker stop boot-dhcp-server &> /dev/null
 docker rm boot-dhcp-server &> /dev/null
@@ -282,14 +289,14 @@ if [ -z "$NO_APPLY_HW" ]; then
     echo "This step could take up to 15 minutes"
     WEBLOG_START=$(date +%FT%T)  
     # ONLY CHECK ENTRIES AFTER WEBLOG_START TO AVOID PAST BUILDS, CHECK UP TO LAST 10 ENTRIES TO AVOID MISSING MESSAGES AFTER RESTART
-    while ( ! (docker logs --since "$WEBLOG_START" --tail 10 -f boot-www-server &) | awk "// {print \$0;} /^$SRV_IP.*GET \/$SRV_NAME.firstboot.sh/ {exit;}" ); do
+    while ( ! (docker logs --since "$WEBLOG_START" --tail 10 -f boot-www-server &) | awk "{print \$0; fflush();} /^$SRV_IP.*GET \/$SRV_NAME.firstboot.sh/ {exit;}" ); do
         echo "WARNING:  Web server was restarted..."
     done
 
     ## WAIT FOR SERVER TO START REBOOT
     echo "Waiting for server [$SRV_IP] to reboot" `date`
     echo "Waiting for server to shutdown..."
-    (ping -i 5 $SRV_IP &) | awk '// {print $0;} /Destination Host Unreachable/ {x++; if (x>3) {exit;}}'
+    (ping -i 5 $SRV_IP &) | awk '{print $0; fflush();} /Destination Host Unreachable/ {x++; if (x>3) {exit;}}'
     
     # wait for previous ping to abort
     sleep 10
@@ -300,7 +307,7 @@ fi
 
 ## WAIT FOR SERVER TO FINISH REBOOT - PING SUCCEEDS 4 TIMES
 echo "Waiting for server to come back up..."
-(ping -i 5 $SRV_IP &) | awk '// {print $0;} /time=/ {x++; if (x>3) {exit;}}'
+(ping -i 5 $SRV_IP &) | awk '{print $0; fflush();} /time=/ {x++; if (x>3) {exit;}}'
 
 ## SETUP SSH KEYS
 echo "Setting up ssh keys for user [$USER] with home [$HOME]"
@@ -337,10 +344,24 @@ if [ "$?" -ne 0 ]; then
     exit 1
 fi
 
+## DELETE HOST ENTRY FROM DHCP
+echo "Removing dhcp configuration for server [$SRV_NAME] from [$DHCP_ROOT/dhcpd.conf]"
+perl -i -p0e "s/^host.*?$SRV_MAC.*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
+
+## START/RESTART DHCP SERVICE
+echo "Restarting dhcp server using folder [$DHCP_ROOT] on interface [$BUILD_INTERFACE]"
+docker stop boot-dhcp-server &> /dev/null
+docker rm boot-dhcp-server &> /dev/null
+docker run -dit --name boot-dhcp-server --rm --net=host -v "$DHCP_ROOT":/data networkboot/dhcpd $BUILD_INTERFACE
+
 ## DONE
 ENDTIME=$(date +%s)
 echo "SUCCESS:  Completed bare metal install of regional server [$SRV_NAME] at" `date`
 echo "SUCCESS:  Try connecting with 'ssh root@$SRV_IP' as user $USER"
 echo "Elapsed time was $(( ($ENDTIME - $STARTTIME) / 60 )) minutes and $(( ($ENDTIME - $STARTTIME) % 60 )) seconds"
+
+# WORKAROUND TO GET TEE REDIRECTION TO TERMINATE
+ps -af
+
 exit 0
 
