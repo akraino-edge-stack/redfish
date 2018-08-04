@@ -142,7 +142,7 @@ if [ -z "$NO_APPLY_HW" ]; then
     echo "This step could take up to 10 minutes"
     HTTPS_PROXY= https_proxy= python "$DELL_ROOT/Redfish Python/ImportSystemConfigurationLocalFilenameREDFISH.py" \
         -ip $SRV_OOB_IP -u $SRV_OOB_USR -p $SRV_OOB_PWD -t ALL -f $BUILD_ROOT/$XMLFILE -s Forced 2>&1 | \
-        awk '// {print $0;} /FAIL/ {T=1;} END {exit $T;}'
+        awk '{if (NF>0) {print $0; fflush();}} /FAIL/ {T=1;} END {exit $T;}'
     if [ "$?" -ne 0 ]; then
         echo "ERROR:  failed applying server BIOS/RAID settings"
         exit 1

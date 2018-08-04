@@ -27,10 +27,9 @@
 # SET DEFAULT VALUES
 UBUNTU_ISO=${UBUNTU_ISO:-}  ## IF NOT SET, UBUNTU_URL WILL BE USED TO DOWNLOAD DEFAULT ISO
 
-# SETUP LOGGING 
-#MYLOGFILE="`basename $0`-${RCFILE##*/}-`date -Im`.log" 
-MYLOGFILE="`basename $0`"; MYLOGFILE="${MYLOGFILE%.*}-`date -Im | sed -e 's/[+:]/-/g'`.log" 
-exec 1> >(tee -a "$MYLOGFILE") 2>&1 
+# SETUP LOGGING (SAVE ORIGINAL STDIN AND STDOUT AS FD 3 AND 4)
+MYLOGFILE="`basename $0`"; MYLOGFILE="${MYLOGFILE%.*}-`date +%FT%H-%M-%S-%2N`.log"
+exec 3>&1 4>&2 1> >(tee -a "$MYLOGFILE") 2>&1
 echo "Logging to $PWD/$MYLOGFILE"
 
 echo "Beginning $0 as user [$USER] in pwd [$PWD] with home [$HOME]"
@@ -74,8 +73,8 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # MAKE VARIABLES AVAILABLE TO OTHER TOOLS CALLED BY THIS SCRIPT
-export NO_CONFIRM; 
-export NO_APPLY_HW; 
+export NO_CONFIRM;
+export NO_APPLY_HW;
 export RCFILE;
 
 # SETUP TOOLS AND LOAD DEFAULT BUILD VARIABLES
@@ -109,7 +108,7 @@ if [ -z "$NO_CONFIRM" ]; then
     echo ""
     read -r -p "Preparing to build of server [$SRV_NAME] using oob ip [$SRV_OOB_IP].  Are you sure? [y/N] " response
     case "$response" in
-        [yY][eE][sS]|[yY]) 
+        [yY][eE][sS]|[yY])
             ;;
         *)
             echo "Script aborted!"
@@ -216,13 +215,13 @@ fi
 ## START WEB SERVICE
 echo "Starting web server using folder [$WEB_ROOT] on port [$BUILD_WEBPORT]"
 # existing container is using different web root or does not exist
-docker stop boot-www-server &> /dev/null
-docker rm boot-www-server &> /dev/null
-docker run -dit --name boot-www-server -p $BUILD_WEBPORT:80 -v "$WEB_ROOT":/usr/local/apache2/htdocs/ httpd:alpine >/dev/null && sleep 5
-if ! docker ps | grep boot-www-server >/dev/null || ! curl http://localhost:$BUILD_WEBPORT/ &>/dev/null ; then
+docker stop akraino-httpboot &> /dev/null
+docker rm akraino-httpboot &> /dev/null
+docker run -dit --name akraino-httpboot -p $BUILD_WEBPORT:80 -v "$WEB_ROOT":/usr/local/apache2/htdocs/ httpd:alpine >/dev/null && sleep 5
+if ! docker ps | grep akraino-httpboot >/dev/null || ! curl http://localhost:$BUILD_WEBPORT/ &>/dev/null ; then
     echo "ERROR: Failed to start web server using folder [$WEB_ROOT] and port [$BUILD_WEBPORT]"
     ls -l $WEB_ROOT
-    docker run -it --name boot-www-server -p $BUILD_WEBPORT:80 -v "$WEB_ROOT":/usr/local/apache2/htdocs/ httpd:alpine 2>&1
+    docker run -it --name akraino-httpboot -p $BUILD_WEBPORT:80 -v "$WEB_ROOT":/usr/local/apache2/htdocs/ httpd:alpine 2>&1
     exit 1
 fi
 
@@ -262,14 +261,14 @@ EOF
 
 ## START/RESTART DHCP SERVICE
 echo "Starting dhcp server using folder [$DHCP_ROOT] on interface [$BUILD_INTERFACE]"
-docker stop boot-dhcp-server &> /dev/null
-docker rm boot-dhcp-server &> /dev/null
-docker run -dit --name boot-dhcp-server --rm --net=host -v "$DHCP_ROOT":/data networkboot/dhcpd $BUILD_INTERFACE >/dev/null && sleep 5
-if ! docker ps | grep boot-dhcp-server >/dev/null; then
+docker stop akraino-dhcp &> /dev/null
+docker rm akraino-dhcp &> /dev/null
+docker run -dit --name akraino-dhcp --rm --net=host -v "$DHCP_ROOT":/data networkboot/dhcpd $BUILD_INTERFACE >/dev/null && sleep 5
+if ! docker ps | grep akraino-dhcp >/dev/null; then
     echo "ERROR: Failed to start dhcp server using folder [$DHCP_ROOT] and interface [$BUILD_INTERFACE]"
     echo "Contents of [$DHCP_ROOT/dhcpd.conf]"
-    cat $DHCP_ROOT/dhcpd.conf 
-    docker run -it --name boot-dhcp-server --rm --net=host -v "$DHCP_ROOT":/data networkboot/dhcpd $BUILD_INTERFACE 2>&1
+    cat $DHCP_ROOT/dhcpd.conf
+    docker run -it --name akraino-dhcp --rm --net=host -v "$DHCP_ROOT":/data networkboot/dhcpd $BUILD_INTERFACE 2>&1
     exit 1
 fi
 
@@ -287,9 +286,9 @@ if [ -z "$NO_APPLY_HW" ]; then
     ## WAIT FOR UBUNTU INSTALL TO DOWNLOAD $SRV_NAME.firstboot.sh
     echo "Waiting for server [$SRV_IP] to download [$SRV_NAME.firstboot.sh] from web container at" `date`
     echo "This step could take up to 15 minutes"
-    WEBLOG_START=$(date +%FT%T)  
+    WEBLOG_START=$(date +%FT%T)
     # ONLY CHECK ENTRIES AFTER WEBLOG_START TO AVOID PAST BUILDS, CHECK UP TO LAST 10 ENTRIES TO AVOID MISSING MESSAGES AFTER RESTART
-    while ( ! (docker logs --since "$WEBLOG_START" --tail 10 -f boot-www-server &) | awk "{print \$0; fflush();} /^$SRV_IP.*GET \/$SRV_NAME.firstboot.sh/ {exit;}" ); do
+    while ( ! (docker logs --since "$WEBLOG_START" --tail 10 -f akraino-httpboot &) | awk "{print \$0; fflush();} /^$SRV_IP.*GET \/$SRV_NAME.firstboot.sh/ {exit;}" ); do
         echo "WARNING:  Web server was restarted..."
     done
 
@@ -297,11 +296,11 @@ if [ -z "$NO_APPLY_HW" ]; then
     echo "Waiting for server [$SRV_IP] to reboot" `date`
     echo "Waiting for server to shutdown..."
     (ping -i 5 $SRV_IP &) | awk '{print $0; fflush();} /Destination Host Unreachable/ {x++; if (x>3) {exit;}}'
-    
+
     # wait for previous ping to abort
     sleep 10
 else
-    ## SKIPPING REBOOT 
+    ## SKIPPING REBOOT
     echo "Skipping application of BIOS/RAID settings - OS should be installed already to work properly - normally used for testing only"
 fi
 
@@ -315,7 +314,7 @@ if ! dpkg -l | grep "sshpass " > /dev/null; then
     echo "  Installing sshpass"
     apt-get install -y sshpass 2>&1 || echo "ERROR: sshpass is required to complete the build"; exit 1;
 fi
-if ! [ -f $HOME/.ssh/id_rsa ]; then 
+if ! [ -f $HOME/.ssh/id_rsa ]; then
     echo "  Creating rsa key [$HOME/.ssh/id_rsa]"
     ssh-keygen -t rsa -f $HOME/.ssh/id_rsa -P ""
 fi
@@ -350,9 +349,9 @@ perl -i -p0e "s/^host.*?$SRV_MAC.*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
 
 ## START/RESTART DHCP SERVICE
 echo "Restarting dhcp server using folder [$DHCP_ROOT] on interface [$BUILD_INTERFACE]"
-docker stop boot-dhcp-server &> /dev/null
-docker rm boot-dhcp-server &> /dev/null
-docker run -dit --name boot-dhcp-server --rm --net=host -v "$DHCP_ROOT":/data networkboot/dhcpd $BUILD_INTERFACE
+docker stop akraino-dhcp &> /dev/null
+docker rm akraino-dhcp &> /dev/null
+docker run -dit --name akraino-dhcp --rm --net=host -v "$DHCP_ROOT":/data networkboot/dhcpd $BUILD_INTERFACE
 
 ## DONE
 ENDTIME=$(date +%s)
@@ -360,8 +359,7 @@ echo "SUCCESS:  Completed bare metal install of regional server [$SRV_NAME] at" 
 echo "SUCCESS:  Try connecting with 'ssh root@$SRV_IP' as user $USER"
 echo "Elapsed time was $(( ($ENDTIME - $STARTTIME) / 60 )) minutes and $(( ($ENDTIME - $STARTTIME) % 60 )) seconds"
 
-# WORKAROUND TO GET TEE REDIRECTION TO TERMINATE
-ps -af
-
+## RESTORE SAVED STDIN AND STDOUT (TERMINATES TEE REDIRECTION)
+exec 1>&3 2>&4
 exit 0
 
