@@ -29,8 +29,8 @@ UBUNTU_ISO=${UBUNTU_ISO:-}  ## IF NOT SET, UBUNTU_URL WILL BE USED TO DOWNLOAD D
 
 # SETUP LOGGING (SAVE ORIGINAL STDIN AND STDOUT AS FD 3 AND 4)
 MYLOGFILE="`basename $0`"; MYLOGFILE="${MYLOGFILE%.*}-`date +%FT%H-%M-%S-%2N`.log"
-exec 3>&1 4>&2 1> >(tee -a "$MYLOGFILE") 2>&1
-echo "Logging to $PWD/$MYLOGFILE"
+#exec 3>&1 4>&2 1> >(tee -a "$MYLOGFILE") 2>&1
+#echo "Logging to $PWD/$MYLOGFILE"
 
 echo "Beginning $0 as user [$USER] in pwd [$PWD] with home [$HOME]"
 
@@ -360,6 +360,6 @@ echo "SUCCESS:  Try connecting with 'ssh root@$SRV_IP' as user $USER"
 echo "Elapsed time was $(( ($ENDTIME - $STARTTIME) / 60 )) minutes and $(( ($ENDTIME - $STARTTIME) % 60 )) seconds"
 
 ## RESTORE SAVED STDIN AND STDOUT (TERMINATES TEE REDIRECTION)
-exec 1>&3 2>&4
+#exec 1>&3 2>&4
 exit 0
 
