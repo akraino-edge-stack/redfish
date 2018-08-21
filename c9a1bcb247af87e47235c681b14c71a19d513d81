@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3b098c17_3db34161",
+        "filename": "serverrc.template",
+        "patchSetId": 2
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 45
+      },
+      "writtenOn": "2018-08-21T16:46:34Z",
+      "side": 1,
+      "message": "The comment does not match the code below\n(16.04.4 vs 16.04.5)",
+      "revId": "c9a1bcb247af87e47235c681b14c71a19d513d81",
+      "serverId": "4cada01b-0314-4fe0-84a1-f9ddc89863f9",
+      "unresolved": false
+    }
+  ]
+}
