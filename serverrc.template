@@ -17,10 +17,6 @@
 # export https_proxy=http://your.proxy.com:8080/
 #
 
-# Set the ip and port to use when creating the web server
-BUILD_WEBIP=192.168.2.5
-BUILD_WEBPORT=8090
-
 # host name for server
 SRV_NAME=aknode44
 
@@ -49,7 +45,7 @@ SRV_BOOT_DEVICE=sda
 
 # ipxe script to use - based on the os version and kernel to install
 # valid options are script-hwe-16.04.4-amd64.ipxe or script-16.04.4-amd64.ipxe
-SRV_BLD_SCRIPT=script-hwe-16.04.4-amd64.ipxe
+SRV_BLD_SCRIPT=script-hwe-16.04.5-amd64.ipxe
 
 # template xml file to set bios and raid configuration settings
 SRV_BIOS_TEMPLATE=dell_r740_g14_uefi_base.xml.template

@@ -63,11 +63,17 @@ mkdir -p $WEB_ROOT
 mkdir -p $DHCP_ROOT
 mkdir -p $BUILD_ROOT
 
-## CHECK XORRISO INSTALLED
-if ! dpkg -l | grep xorriso >>/dev/null; then
-    echo "FAILED:  required package xorriso not found.  try sudo 'apt-get install xorriso -y'"
-    exit 1
-fi
+## CHECK THAT REQUIRED PACKAGES ARE INSTALLED
+PACKAGES="xorriso sshpass python-requests coreutils"
+for PKG in $PACKAGES ; do
+    if ! dpkg -l | grep $PKG >>/dev/null; then
+        echo "Attempting to install missing package $PKG"
+        if ! apt-get install -y $PKG; then
+            echo "FAILED:  required package $PKG not found.  try sudo 'apt-get install $PKG -y'"
+            exit 1
+        fi
+    fi
+done
 
 ## DOWNLOAD TOOLS TO TOOLS_ROOT IF TOOLS FOLDER MISSING
 if [ ! -d "$TOOLS_ROOT" ]; then

@@ -244,9 +244,16 @@ subnet $SRV_SUBNET netmask $SRV_NETMASK {
 }
 EOF
 
+## CHECK THAT SRV_BLD_SCRIPT EXISTS
+if [ ! -f "$WEB_ROOT/$SRV_BLD_SCRIPT" ]; then
+    echo "ERROR: Missing SRV_BLD_SCRIPT [$SRV_BLD_SCRIPT] from web root [$WEB_ROOT]"
+    exit 1
+fi
+
 echo "Updating dhcp configuration [$DHCP_ROOT/dhcpd.conf] with server [$SRV_NAME]"
-## DELETE ANY HOST ENTRY WITH THE SAME MAC ADDRESS (IGNORING THE NAME WHICH COULD CHANGE)
+## DELETE ANY HOST ENTRY WITH THE SAME MAC ADDRESS OR NAME
 perl -i -p0e "s/^host.*?$SRV_MAC.*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
+perl -i -p0e "s/^host *$SRV_NAME *{.*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
 cat >>$DHCP_ROOT/dhcpd.conf <<EOF
 host $SRV_NAME {
     hardware ethernet $SRV_MAC;
@@ -275,7 +282,7 @@ fi
 ## CREATE CONFIG FILES AND APPLY UNLESS CALLED WITH --no-apply-hw
 . $TOOLS_ROOT/apply_dellxml.sh --template $SRV_BIOS_TEMPLATE
 echo "Completed update with status [$?]"
-sleep 20
+sleep 80
 
 . $TOOLS_ROOT/apply_dellxml.sh --template $SRV_BOOT_TEMPLATE
 echo "Completed update with status [$?]"
@@ -287,8 +294,9 @@ if [ -z "$NO_APPLY_HW" ]; then
     echo "Waiting for server [$SRV_IP] to download [$SRV_NAME.firstboot.sh] from web container at" `date`
     echo "This step could take up to 15 minutes"
     WEBLOG_START=$(date +%FT%T)
+    WSTART=$(date +%s)
     # ONLY CHECK ENTRIES AFTER WEBLOG_START TO AVOID PAST BUILDS, CHECK UP TO LAST 10 ENTRIES TO AVOID MISSING MESSAGES AFTER RESTART
-    while ( ! (docker logs --since "$WEBLOG_START" --tail 10 -f akraino-httpboot &) | awk "{print \$0; fflush();} /^$SRV_IP.*GET \/$SRV_NAME.firstboot.sh/ {exit;}" ); do
+    while [ $(date +%s) -lt $[$WSTART + 900] ] && ( ! (timeout 900s docker logs --since "$WEBLOG_START" --tail 10 -f akraino-httpboot &) | awk "{print \$0; fflush();} /^$SRV_IP.*GET \/$SRV_NAME.firstboot.sh/ {exit;}" ); do
         echo "WARNING:  Web server was restarted..."
     done
 
@@ -344,14 +352,13 @@ if [ "$?" -ne 0 ]; then
 fi
 
 ## DELETE HOST ENTRY FROM DHCP
-echo "Removing dhcp configuration for server [$SRV_NAME] from [$DHCP_ROOT/dhcpd.conf]"
+echo "Removing dhcp configuration for server [$SRV_NAME] [$SRV_MAC] from [$DHCP_ROOT/dhcpd.conf]"
 perl -i -p0e "s/^host.*?$SRV_MAC.*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
+perl -i -p0e "s/^host *$SRV_NAME *{.*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
 
-## START/RESTART DHCP SERVICE
+## RESTART DHCP SERVICE
 echo "Restarting dhcp server using folder [$DHCP_ROOT] on interface [$BUILD_INTERFACE]"
-docker stop akraino-dhcp &> /dev/null
-docker rm akraino-dhcp &> /dev/null
-docker run -dit --name akraino-dhcp --rm --net=host -v "$DHCP_ROOT":/data networkboot/dhcpd $BUILD_INTERFACE
+docker restart akraino-dhcp &> /dev/null
 
 ## DONE
 ENDTIME=$(date +%s)
