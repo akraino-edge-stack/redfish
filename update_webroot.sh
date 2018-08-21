@@ -75,7 +75,7 @@ if [ -z $UBUNTU_ISO ] || ! xorriso --indev $UBUNTU_ISO --check-media &>/dev/null
     echo "WARNING:  ISO file [$UBUNTU_ISO] appears to be missing or corrupt.  Downloading instead."
     xorriso --indev $UBUNTU_ISO --check-media 2>&1 | sed -e "s/^/    /g"
     export UBUNTU_ISO=${UBUNTU_URL##*/}
-    echo "WARNING:  Attempting to us [$UBUNTU_ISO] instead."
+    echo "WARNING:  Attempting to use [$UBUNTU_ISO] instead."
     if ! [ -f $WEB_ROOT/$UBUNTU_ISO ]; then 
         echo "Downloading Ubuntu iso from [$UBUNTU_URL] to [$UBUNTU_ISO]"
         curl -Lo $WEB_ROOT/$UBUNTU_ISO $UBUNTU_URL
