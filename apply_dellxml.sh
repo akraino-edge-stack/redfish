@@ -74,11 +74,14 @@ if [ -n "$RCFILE" ] && [ -f "$RCFILE" ]; then
 fi
 
 # CHECK A FEW REQUIRED VARIABLES - BUT NOT ALL
-if [ -z "$SRV_NAME" ] || [ -z "$SRV_OOB_IP" ] || [ -z "$SRV_OOB_USR" ] || [ -z "$SRV_OOB_PWD" ]; then
-    echo "ERROR:  Invalid or missing variables in rcfile [$RCFILE]"
-    echo "usage:  ./apply_dellxml.sh [--rc settingsfile] --template templatefile [--no-confirm] [--no-apply-hw] [--help]"
-    exit 1
-fi
+CHECKLIST="SRV_NAME SRV_OOB_IP SRV_OOB_USR SRV_OOB_PWD BUILD_WEBIP BUILD_WEBPORT"
+for VAR in $CHECKLIST; do
+    if [ -z "${!VAR}" ] ; then
+        echo "ERROR:  Invalid or missing variable [$VAR] = [${!VAR}] in rcfile [$RCFILE]"
+        echo "usage:  ./apply_dellxml.sh [--rc settingsfile] --template templatefile [--no-confirm] [--no-apply-hw] [--help]"
+        exit 1
+    fi
+done
 
 # CHECK IF TEMPLATE PASSED AND EXISTS
 if [ -z "$TEMPLATE" ] || ! [ -f "$TOOLS_ROOT/$TEMPLATE" ]; then
