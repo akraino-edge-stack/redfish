@@ -145,7 +145,7 @@ else
     ifconfig | grep --no-group-separator -B1 ":$BUILD_WEBIP "
 fi
 
-## COLLECT ANY ADDITIONAL SERVER DATA NEEDED - IE LOOKUP MAC FOR DELL NIC
+## COLLECT ANY ADDITIONAL SERVER DATA NEEDED - FOR EXAMPLE, LOOKUP MAC FOR DELL NIC
 case $SRV_OEM in
     Dell|DELL)
     if [ -z "$SRV_MAC" ]; then
@@ -157,8 +157,10 @@ case $SRV_OEM in
     fi
     ;;
     HP|HPE)
-    echo "ERROR:  HPE SERVER BUILDS ARE NOT SUPPORTED YET!!!"
-    exit 1;
+    if [ -z "$SRV_MAC" ]; then
+        echo "ERROR:  HPE required variable SRV_MAC missing from rc file [$RCFILE]"
+        exit 1;
+    fi
     ;;
     *)    # unknown option
     echo "ERROR:  Unknown server oem [$SRV_OEM]"
@@ -280,13 +282,39 @@ if ! docker ps | grep akraino-dhcp >/dev/null; then
 fi
 
 ## CREATE CONFIG FILES AND APPLY UNLESS CALLED WITH --no-apply-hw
-. $TOOLS_ROOT/apply_dellxml.sh --template $SRV_BIOS_TEMPLATE
-echo "Completed update with status [$?]"
-sleep 80
+case $SRV_OEM in
+    Dell|DELL)
+        if [ -z "$SRV_BIOS_TEMPLATE" ]; then
+            . $TOOLS_ROOT/apply_dellxml.sh --template $SRV_BIOS_TEMPLATE
+            echo "Completed update with status [$?]"
+            sleep 80
+        fi
 
-. $TOOLS_ROOT/apply_dellxml.sh --template $SRV_BOOT_TEMPLATE
-echo "Completed update with status [$?]"
-sleep 20
+        if [ -z "$SRV_BOOT_TEMPLATE" ]; then
+            . $TOOLS_ROOT/apply_dellxml.sh --template $SRV_BOOT_TEMPLATE
+            echo "Completed update with status [$?]"
+            sleep 20
+        fi
+    ;;
+    HP|HPE)
+        if [ -z "$SRV_BIOS_TEMPLATE" ]; then
+            . $TOOLS_ROOT/apply_hpejson.sh --template $SRV_BIOS_TEMPLATE
+            echo "Completed update with status [$?]"
+            echo "Waiting for server to reboot with new settings."
+            sleep 180
+        fi
+        if [ -z "$SRV_BOOT_TEMPLATE" ]; then
+            . $TOOLS_ROOT/apply_hpejson.sh --template $SRV_BIOS_TEMPLATE
+            echo "Completed update with status [$?]"
+            echo "Waiting for server to reboot with new settings."
+            sleep 180
+        fi
+    ;;
+    *)  # unknown option
+        echo "ERROR:  Unknown server oem [$SRV_OEM]"
+        exit 1;
+    ;;
+esac
 
 if [ -z "$NO_APPLY_HW" ]; then
 
@@ -299,6 +327,11 @@ if [ -z "$NO_APPLY_HW" ]; then
     while [ $(date +%s) -lt $[$WSTART + 900] ] && ( ! (timeout 900s docker logs --since "$WEBLOG_START" --tail 10 -f akraino-httpboot &) | awk "{print \$0; fflush();} /^$SRV_IP.*GET \/$SRV_NAME.firstboot.sh/ {exit;}" ); do
         echo "WARNING:  Web server was restarted..."
     done
+
+    if [ $(date +%s) -gt $[$WSTART + 900] ]; then
+        echo "ERROR:  Timeout waiting for server to download firstboot.sh"
+        exit 1
+    fi
 
     ## WAIT FOR SERVER TO START REBOOT
     echo "Waiting for server [$SRV_IP] to reboot" `date`

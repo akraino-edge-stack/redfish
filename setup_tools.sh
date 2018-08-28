@@ -90,13 +90,30 @@ fi
 if [ ! -d "$DELL_ROOT" ]; then
     echo "Cloning Dell redfish source from [$DELL_GIT] to [$DELL_ROOT]"
     git clone $DELL_GIT $DELL_ROOT
+
+    ## PATCH STATUS REPORTING DELAY TO 15 SECS (INSTEAD OF 3)
+    sed -i -e 's/time.sleep(3)/time.sleep(15)/g' "$DELL_ROOT/Redfish Python/ImportSystemConfigurationLocalFilenameREDFISH.py"
 fi
 if [ ! -f "$DELL_ROOT/Redfish Python/ImportSystemConfigurationLocalFilenameREDFISH.py" ]; then
     echo "ERROR:  failed cloning Dell redfish tools from [$DELL_GIT] to [$DELL_ROOT]"
     exit 1
-else
-    ## PATCH STATUS REPORTING DELAY TO 15 SECS (INSTEAD OF 3)
-    sed -i -e 's/time.sleep(3)/time.sleep(15)/g' "$DELL_ROOT/Redfish Python/ImportSystemConfigurationLocalFilenameREDFISH.py"
+fi
+
+## DOWNLOAD HPE REDFISH TOOLS_ROOT IF HPE FOLDER MISSING
+if [ ! -d "$HPE_ROOT" ]; then
+    echo "Cloning HPE redfish tools from [$HPE_GIT] to [$HPE_ROOT]"
+    git clone $HPE_GIT $HPE_ROOT
+
+    ## BUILD HPE TOOLS
+    (
+    cd $HPE_ROOT
+    python setup.py sdist --formats=zip
+    pip install $HPE_ROOT/dist/python-ilorest-library-*.zip
+    )
+fi
+if [ ! -f "$HPE_ROOT/examples/Redfish/_redfishobject.py" ]; then
+    echo "ERROR:  failed cloning HPE redfish tools from [$HPE_GIT] to [$HPE_ROOT]"
+    exit 1
 fi
 
 echo "Tools are ready in [$REDFISH_ROOT]"
