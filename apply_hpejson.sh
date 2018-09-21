@@ -143,7 +143,7 @@ if [ -z "$NO_APPLY_HW" ]; then
     ## PUSH HARDWARE CONFIG JSON USING REDFISH - BYPASS PROXY FOR INTERNAL CONNECTION TO IDRAC
     echo "Applying server settings file [$BUILD_ROOT/$JSONFILE] to [$SRV_OOB_IP]"
     echo "This step could take up to 10 minutes"
-    HTTPS_PROXY= https_proxy= PYTHONPATH=$HPE_ROOT/examples/Redfish/ python "$TOOLS_ROOT/set_hpe_config.py" \
+    HTTPS_PROXY= https_proxy= PYTHONPATH=$HPE_ROOT/examples/Redfish/ python -u "$TOOLS_ROOT/set_hpe_config.py" \
         -ip $SRV_OOB_IP -u $SRV_OOB_USR -p $SRV_OOB_PWD -f $BUILD_ROOT/$JSONFILE 2>&1
     if [ "$?" -ne 0 ]; then
         echo "ERROR:  failed applying server BIOS/RAID settings"

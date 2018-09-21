@@ -107,7 +107,7 @@ if [ ! -d "$HPE_ROOT" ]; then
     ## BUILD HPE TOOLS
     (
     cd $HPE_ROOT
-    python setup.py sdist --formats=zip
+    python -u setup.py sdist --formats=zip
     pip install $HPE_ROOT/dist/python-ilorest-library-*.zip
     )
 fi
