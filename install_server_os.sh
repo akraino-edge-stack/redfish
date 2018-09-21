@@ -88,11 +88,15 @@ if [ -n "$RCFILE" ] && [ -f "$RCFILE" ]; then
     source $RCFILE
 fi
 
-if [ -z "$SRV_NAME" ] || [ -z "$SRV_OOB_IP" ] || [ -z "$SRV_OOB_USR" ] || [ -z "$SRV_OOB_PWD" ] || [ -z "$SRV_IPXE_INF" ] ; then
-    echo "ERROR:  Invalid or missing variables in rcfile [$RCFILE]"
-    echo "usage:  ./install_regionserver.sh  [--rc settingsfile] [--no-confirm] [--no-apply-hw] [--help]"
-    exit 1
-fi
+# CHECK A FEW REQUIRED VARIABLES - BUT NOT ALL
+CHECKLIST="SRV_NAME SRV_OOB_IP SRV_OOB_USR SRV_OOB_PWD SRV_IPXE_INF BUILD_WEBIP BUILD_WEBPORT"
+for VAR in $CHECKLIST; do
+    if [ -z "${!VAR}" ] ; then
+        echo "ERROR:  Invalid or missing variable [$VAR] = [${!VAR}] in rcfile [$RCFILE]"
+        echo "usage:  ./install_regionserver.sh  [--rc settingsfile] [--no-confirm] [--no-apply-hw] [--help]"
+        exit 1
+    fi
+done
 
 ## FIND BUILD_WEBIP IF NOT PROVIDED
 if [ -z "$BUILD_WEBIP" ]; then
