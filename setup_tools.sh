@@ -91,6 +91,11 @@ if [ ! -d "$DELL_ROOT" ]; then
     echo "Cloning Dell redfish source from [$DELL_GIT] to [$DELL_ROOT]"
     git clone $DELL_GIT $DELL_ROOT
 
+    if [ -n "DELL_GIT_COMMIT" ]; then
+        echo "Using specific commit id [$DELL_GIT_COMMIT]"
+        (cd $DELL_ROOT; git checkout $DELL_GIT_COMMIT)
+    fi
+
     ## PATCH STATUS REPORTING DELAY TO 15 SECS (INSTEAD OF 3)
     sed -i -e 's/time.sleep(3)/time.sleep(15)/g' "$DELL_ROOT/Redfish Python/ImportSystemConfigurationLocalFilenameREDFISH.py"
 fi
