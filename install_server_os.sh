@@ -89,7 +89,7 @@ if [ -n "$RCFILE" ] && [ -f "$RCFILE" ]; then
 fi
 
 # CHECK A FEW REQUIRED VARIABLES - BUT NOT ALL
-CHECKLIST="SRV_NAME SRV_OOB_IP SRV_OOB_USR SRV_OOB_PWD SRV_IPXE_INF BUILD_WEBIP BUILD_WEBPORT"
+CHECKLIST="SRV_NAME SRV_OOB_IP SRV_OOB_USR SRV_OOB_PWD SRV_IPXE_INF BUILD_WEBPORT"
 for VAR in $CHECKLIST; do
     if [ -z "${!VAR}" ] ; then
         echo "ERROR:  Invalid or missing variable [$VAR] = [${!VAR}] in rcfile [$RCFILE]"
