@@ -40,13 +40,14 @@ apparmor_parser  -R /etc/apparmor.d/usr.sbin.tcpdump
 echo "Adding IP Tables Rules"
 echo 1 > /proc/sys/net/ipv4/ip_forward 
 iptables -t nat -A POSTROUTING -o bond0.41 -j MASQUERADE 
-iptables -A FORWARD -i bond0.41 -o eno3 -m state --state RELATED,ESTABLISHED -j ACCEPT 
-iptables -A FORWARD -i eno3 -o bond0.41 -j ACCEPT
+iptables -A FORWARD -i bond0.41 -o @@SRV_PXE_INF@@ -m state --state RELATED,ESTABLISHED -j ACCEPT 
+iptables -A FORWARD -i @@SRV_PXE_INF@@ -o bond0.41 -j ACCEPT
 
 echo "Creating Ceph journal partition and filesystem"
 # create ceph journal partition and filesystem
 
-devices=sdh
+devices=@@SRV_CEPH_DEVICE@@
+#devices=sdh
 #size=320
 
 echo "creating partions for ceph journal:"
