@@ -13,7 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 # Add proxy settings if required for your environment
 #
 #export http_proxy=http://your.proxy.com:8080/
@@ -24,21 +23,30 @@ echo "### BEGINING FIRSTBOOT SCRIPT ###" "[`date`]"
 echo " "
 echo "### BUILDING SERVER [$HOSTNAME]"
 echo " "
-
 echo "Updating available packages"
 apt-get update 
+apt-get install -y --install-recommends linux-generic-hwe-16.04 xserver-xorg-hwe-16.04
+apt-get install -y ipmitool
+
+# Adding 3 node cluster related changes
+swapoff  --all
+ln -s /etc/apparmor.d/usr.sbin.ntpd /etc/apparmor.d/disable/
+ln -s /etc/apparmor.d/usr.sbin.tcpdump /etc/apparmor.d/disable/
+apparmor_parser  -R /etc/apparmor.d/usr.sbin.ntpd
+apparmor_parser  -R /etc/apparmor.d/usr.sbin.tcpdump
 
 echo "Adding IP Tables Rules"
 echo 1 > /proc/sys/net/ipv4/ip_forward 
 iptables -t nat -A POSTROUTING -o bond0.41 -j MASQUERADE 
-iptables -A FORWARD -i bond0.41 -o eno3 -m state --state RELATED,ESTABLISHED -j ACCEPT 
-iptables -A FORWARD -i eno3 -o bond0.41 -j ACCEPT
+iptables -A FORWARD -i bond0.41 -o @@SRV_PXE_INF@@ -m state --state RELATED,ESTABLISHED -j ACCEPT 
+iptables -A FORWARD -i @@SRV_PXE_INF@@ -o bond0.41 -j ACCEPT
 
 echo "Creating Ceph journal partition and filesystem"
 # create ceph journal partition and filesystem
 
-devices=sdh
-size=320
+devices=@@SRV_CEPH_DEVICE@@
+#devices=sdh
+#size=320
 
 echo "creating partions for ceph journal:"
 echo $devices
@@ -46,7 +54,7 @@ echo $devices
 for d in $devices
 do
    parted -s /dev/${d} mklabel msdos
-   parted -s /dev/${d} -- mkpart primary ext4 1 ${size}
+   parted -s -a optimal /dev/${d} -- mkpart primary ext4 1 -1s
 done
 partprobe
 sleep 5 #let udev settle down
@@ -54,8 +62,8 @@ sleep 5 #let udev settle down
 devnum=1
 for d in $devices
 do
-   mountpoint=/var/lib/openstack-helm/ceph/journal/ceph${devnum}
-   mkfs -t ext4  /dev/${d}${devnum}
+   mountpoint=/var/lib/ceph/journal
+   mkfs.ext4 -F /dev/${d}${devnum}
    UUID=$(blkid -o export /dev/${d}${devnum} | sed -ne /^UUID/s/UUID=//p)
    mkdir -p ${mountpoint}
    echo "UUID=$UUID ${mountpoint} ext4 defaults,nofail 0 0" >>/etc/fstab
@@ -63,6 +71,106 @@ do
 done
 
 /bin/mount -a
+devnum=1
+for d in $devices
+do
+  df -lh /dev/${d}${devnum}
+  if [ $? -eq 0 ]
+  then
+    echo " ${d}${devnim} Filesystem Created successfully"
+  else
+    echo " ${d}${devnim} Filesystem not Found"
+  fi
+done
+
+# Creating Network interfaces for Calico, Neutron and Storage
+echo " Creating Additional Network interfaces"
+bond=@@SRV_BOND@@"."
+storage=${bond}@@SRV_STORAGE_VLAN@@
+calico=${bond}@@SRV_CALICO_VLAN@@
+neutron=${bond}@@SRV_NEUTRON_VLAN@@
+
+cp -p /etc/network/interfaces /etc/network/interfaces.orig
+
+#Creating Storage interface 
+if [ -n "@@SRV_STORAGE_VLAN@@" ]; then
+    echo "Configuring Storage interface in the server"
+    tee -a /etc/network/interfaces << END
+    #STORAGE
+    auto $storage
+    iface $storage inet static
+        address @@SRV_STORAGE_IP@@
+        netmask 255.255.255.0
+        vlan-raw-device @@SRV_BOND@@
+        mtu @@SRV_MTU@@
+END
+    ifup $storage
+    if [ $? -eq 0 ]; then
+        echo " Storage interface Created"
+    else
+        echo " Failed to create Storage Interface"
+    fi
+fi
+
+#Creating Calico Interface
+if [ -n "@@SRV_CALICO_VLAN@@" ]; then
+    echo "Configuring Calico Interface in the server"
+    tee -a /etc/network/interfaces << END
+    #CALICO
+    auto $calico
+    iface $calico inet static
+        address @@SRV_CALICO_IP@@
+        netmask 255.255.255.0
+        vlan-raw-device @@SRV_BOND@@
+        mtu @@SRV_MTU@@
+END
+    ifup $calico
+    if [ $? -eq 0 ]; then
+        echo " Calico interface Created"
+    else
+        echo " Failed to create Calico Interface"
+    fi
+fi
+
+# Creating Overlay/Neutron interface
+
+if [ -n "@@SRV_NEUTRON_VLAN@@" ]; then
+    echo "Configuring Neutron Interface in the server"
+    tee -a /etc/network/interfaces << END
+    #OVERLAY/NEUTRON
+    auto $neutron
+    iface $neutron inet static
+        address @@SRV_NEUTRON_IP@@
+        netmask 255.255.255.0
+        vlan-raw-device @@SRV_BOND@@
+        mtu @@SRV_MTU@@
+END
+    ifup $neutron
+    if [ $? -eq 0 ]; then
+        echo " Neutron interface Created"
+    else
+        echo " Failed to create Neutron Interface"
+    fi
+fi
+# Creating PXE interface
+
+if [ -n "@@SRV_PXE_INF@@" ]; then
+    echo "Configuring PXE Interface in the server"
+    tee -a /etc/network/interfaces << END
+    #OVERLAY/NEUTRON
+    auto @@SRV_PXE_INF@@
+        iface @@SRV_PXE_INF@@ inet static
+        address @@SRV_PXE_IP@@
+        netmask 255.255.255.0
+        mtu @@SRV_MTU@@
+END
+    ifup @@SRV_PXE_INF@@
+    if [ $? -eq 0 ]; then
+        echo " PXE interface Created"
+    else
+        echo " Failed to create PXE Interface"
+    fi
+fi
 
 exit
 
