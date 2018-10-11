@@ -65,7 +65,7 @@ devnum=1
 for d in $devices
 do
    mountpoint=/var/lib/ceph/journal
-   mkfs -t ext4  /dev/${d}${devnum}
+   mkfs.ext4 -F  /dev/${d}${devnum}
    UUID=$(blkid -o export /dev/${d}${devnum} | sed -ne /^UUID/s/UUID=//p)
    mkdir -p ${mountpoint}
    echo "UUID=$UUID ${mountpoint} ext4 defaults,nofail 0 0" >>/etc/fstab
