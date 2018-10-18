@@ -232,13 +232,14 @@ if [ ! -f "$DHCP_ROOT/dhcpd.conf" ]; then
     cp -f $TOOLS_ROOT/dhcpd.conf.template $DHCP_ROOT/dhcpd.conf
 fi
 
+SRV_DNSCSV=$(echo $SRV_DNS | tr ' ' ',')
 echo "Updating dhcp configuration [$DHCP_ROOT/dhcpd.conf] with subnet [$SRV_SUBNET]"
 perl -i -p0e "s/^subnet $SRV_SUBNET .*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
 cat >>$DHCP_ROOT/dhcpd.conf <<EOF
 subnet $SRV_SUBNET netmask $SRV_NETMASK {
     option subnet-mask $SRV_NETMASK;
     option routers $SRV_GATEWAY;
-    option domain-name-servers $SRV_DNS;
+    option domain-name-servers $SRV_DNSCSV;
     option domain-name "$SRV_DOMAIN";
     option ipxe-web-server "$BUILD_WEBIP:$BUILD_WEBPORT";
 }
