@@ -173,6 +173,9 @@ END
         echo " Failed to create PXE Interface"
     fi
 fi
+# Added ntp fix for genesis
+sed -i '/.ubuntu.pool.ntp.org/s/#//g' /etc/ntp.conf
+service ntp restart
 
 exit
 
