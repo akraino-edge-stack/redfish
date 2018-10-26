@@ -155,7 +155,6 @@ d-i finish-install/reboot_in_progress note
 d-i preseed/late_command string \
     in-target /bin/sed -i 's/^PermitRootLogin .*$/PermitRootLogin yes/g' /etc/ssh/sshd_config; \
     in-target /bin/sed -i 's/^server /#server /g' /etc/ntp.conf; \
-    in-target /bin/sed -i 's/^pool /#pool /g' /etc/ntp.conf; \
     in-target /bin/bash -c '/bin/echo "server @@SRV_NTP@@" >> /etc/ntp.conf'; \
     in-target /bin/bash -c '/bin/echo "8021q" >> /etc/modules'; \
     in-target /bin/bash -c 'mv /etc/network/interfaces /etc/network/interfaces.save'; \
