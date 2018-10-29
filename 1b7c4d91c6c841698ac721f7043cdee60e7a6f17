@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "996c7fa9_29b7fb36",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 45
+      },
+      "writtenOn": "2018-10-29T19:59:51Z",
+      "side": 1,
+      "message": "should this be /opt/dell?",
+      "revId": "1b7c4d91c6c841698ac721f7043cdee60e7a6f17",
+      "serverId": "4cada01b-0314-4fe0-84a1-f9ddc89863f9",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "40541d23_efe1b2c0",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 45
+      },
+      "writtenOn": "2018-10-29T19:59:51Z",
+      "side": 1,
+      "message": "remove spaces at end of line",
+      "revId": "1b7c4d91c6c841698ac721f7043cdee60e7a6f17",
+      "serverId": "4cada01b-0314-4fe0-84a1-f9ddc89863f9",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e7db1cfa_ac57320b",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 45
+      },
+      "writtenOn": "2018-10-29T19:59:51Z",
+      "side": 1,
+      "message": "I don\u0027t think git is loaded.  You may need to apt-get it",
+      "revId": "1b7c4d91c6c841698ac721f7043cdee60e7a6f17",
+      "serverId": "4cada01b-0314-4fe0-84a1-f9ddc89863f9",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f2f9ca4b_0bda7b9a",
+        "filename": "build-container.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 45
+      },
+      "writtenOn": "2018-10-29T19:59:51Z",
+      "side": 1,
+      "message": "Remove this line -- it is set by the parent script",
+      "revId": "1b7c4d91c6c841698ac721f7043cdee60e7a6f17",
+      "serverId": "4cada01b-0314-4fe0-84a1-f9ddc89863f9",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b63edec1_da3e517f",
+        "filename": "build-container.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 45
+      },
+      "writtenOn": "2018-10-29T19:59:51Z",
+      "side": 1,
+      "message": "There is no argument $1 to this script.\nYou need to determine the version from version.properties",
+      "revId": "1b7c4d91c6c841698ac721f7043cdee60e7a6f17",
+      "serverId": "4cada01b-0314-4fe0-84a1-f9ddc89863f9",
+      "unresolved": false
+    }
+  ]
+}
