@@ -25,14 +25,14 @@ export DELL_GIT=${DELL_GIT:-https://github.com/dell/iDRAC-Redfish-Scripting.git}
 export DELL_GIT_COMMIT=${DELL_GIT_COMMIT:-64f184c8c37ed1f64831c5695cd69092105e5eec}
 export HPE_GIT=${HPE_GIT:-https://github.com/HewlettPackard/python-ilorest-library.git}
 
-export REDFISH_ROOT=${REDFISH_ROOT:-/opt/akraino}
-export WEB_ROOT=${WEB_ROOT:-$REDFISH_ROOT/www}
-export DHCP_ROOT=${DHCP_ROOT:-$REDFISH_ROOT/dhcp}
+export REDFISH_ROOT=${REDFISH_ROOT:-/opt}
+export WEB_ROOT=${WEB_ROOT:-/opt/akraino/www}
+export DHCP_ROOT=${DHCP_ROOT:-/opt/akraino/dhcp}
 export TOOLS_ROOT=${TOOLS_ROOT:-$REDFISH_ROOT/tools}
 export DELL_ROOT=${DELL_ROOT:-$REDFISH_ROOT/dell}
 export HPE_ROOT=${HPE_ROOT:-$REDFISH_ROOT/hpe}
 export REGION_ROOT=${REGION_ROOT:-$WEB_ROOT/region}
-export BUILD_ROOT=${BUILD_ROOT:-$REDFISH_ROOT/server-config}
+export BUILD_ROOT=${BUILD_ROOT:-/opt/akraino/server-config}
 export IPXE_ROOT=${IPXE_ROOT:-$REDFISH_ROOT/ipxe}
 
 export UBUNTU_URL=${UBUNTU_URL:-http://releases.ubuntu.com/16.04/ubuntu-16.04.5-server-amd64.iso}
