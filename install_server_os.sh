@@ -34,6 +34,38 @@ if [[ $- = *i* ]]; then
     echo "Logging to $PWD/$MYLOGFILE"
 fi
 
+setup_ssh_firstboot() {
+    ## SETUP SSH KEYS
+    echo "Setting up ssh keys for user [$USER] with home [$HOME]"
+    if ! dpkg -l | grep "sshpass " > /dev/null; then
+        echo "  Installing sshpass"
+        apt-get install -y sshpass 2>&1 || echo "ERROR: sshpass is required to complete the build"; exit 1;
+    fi
+    if ! [ -f $HOME/.ssh/id_rsa ]; then
+        echo "  Creating rsa key [$HOME/.ssh/id_rsa]"
+        ssh-keygen -t rsa -f $HOME/.ssh/id_rsa -P ""
+    fi
+    echo "  Removing any old host keys for [$SRV_IP]"
+    ls -l $HOME/.ssh/
+    chown $USER:$USER $HOME/.ssh/known_hosts
+    ssh-keygen -f "$HOME/.ssh/known_hosts" -R $SRV_IP
+    chown $USER:$USER $HOME/.ssh/known_hosts
+    ls -l $HOME/.ssh/
+    echo "  Getting new host keys for [$SRV_IP]"
+    sleep 5
+    ssh-keyscan -t rsa -H $SRV_IP >> $HOME/.ssh/known_hosts
+    echo "  copying user key to [root@$SRV_IP]"
+    sleep 5
+    export SSHPASS=$SRV_PWD
+    sshpass -e ssh-copy-id -i $HOME/.ssh/id_rsa root@$SRV_IP
+    ## Checking Firstboot script availbility on target Server
+    sshpass -e ssh -i $HOME/.ssh/id_rsa root@$SRV_IP ls $SRV_NAME.firstboot.sh
+    if [ "$?" -ne 0 ]; then
+        echo "FAILED: Unable to find the firstboot file in target server"
+        exit 1
+    fi
+}
+
 echo "Beginning $0 as user [$USER] in pwd [$PWD] with home [$HOME]"
 
 # default behavior will require confirmation before starting
@@ -328,56 +360,36 @@ if [ -z "$NO_APPLY_HW" ]; then
     WEBLOG_START=$(date +%FT%T)
     WSTART=$(date +%s)
     # ONLY CHECK ENTRIES AFTER WEBLOG_START TO AVOID PAST BUILDS, CHECK UP TO LAST 10 ENTRIES TO AVOID MISSING MESSAGES AFTER RESTART
-    while [ $(date +%s) -lt $[$WSTART + 900] ] && ( ! (timeout 900s docker logs --since "$WEBLOG_START" --tail 10 -f akraino-httpboot &) | awk "{print \$0; fflush();} /^$SRV_IP.*GET \/$SRV_NAME.firstboot.sh/ {exit;}" ); do
+    while [ $(date +%s) -lt $[$WSTART + 600] ] && ( ! (timeout 600s docker logs --since "$WEBLOG_START" --tail 10 -f akraino-httpboot &) | awk "{print \$0; fflush();} /^$SRV_IP.*GET \/$SRV_NAME.firstboot.sh/ {exit;}" ); do
         echo "WARNING:  Web server was restarted..."
     done
 
-    if [ $(date +%s) -gt $[$WSTART + 900] ]; then
+    if [ $(date +%s) -gt $[$WSTART + 600] ]; then
         echo "ERROR:  Timeout waiting for server to download firstboot.sh"
         exit 1
     fi
-
-    ## WAIT FOR SERVER TO START REBOOT
-    echo "Waiting for server [$SRV_IP] to reboot" `date`
-    echo "Waiting for server to shutdown..."
-    (ping -i 5 $SRV_IP &) | awk '{print $0; fflush();} /Destination Host Unreachable/ {x++; if (x>3) {exit;}}'
-
-    # wait for previous ping to abort
-    sleep 10
 else
     ## SKIPPING REBOOT
     echo "Skipping application of BIOS/RAID settings - OS should be installed already to work properly - normally used for testing only"
 fi
 
-## WAIT FOR SERVER TO FINISH REBOOT - PING SUCCEEDS 4 TIMES
-echo "Waiting for server to come back up..."
-(ping -i 5 $SRV_IP &) | awk '{print $0; fflush();} /time=/ {x++; if (x>3) {exit;}}'
-
-## SETUP SSH KEYS
-echo "Setting up ssh keys for user [$USER] with home [$HOME]"
-if ! dpkg -l | grep "sshpass " > /dev/null; then
-    echo "  Installing sshpass"
-    apt-get install -y sshpass 2>&1 || echo "ERROR: sshpass is required to complete the build"; exit 1;
+## Check Server Status after installation
+pingstat=$(ping -c 3 $SRV_IP | grep 'received' | awk -F',' '{ print $2}' | awk '{ print $1}')
+if [ $pingstat -lt 3 ]; then
+    echo "Waiting for server to come back up..."
+    for (( i=1; i<= 3; i++ )); do
+        echo "Waiting for server to come back up..."
+        sleep 30
+        if [ $pingstat -lt 3 ]; then
+            echo "Server still not completed reboot"
+            exit 1
+        else
+            setup_ssh_firstboot
+        fi
+    done
+else
+    setup_ssh_firstboot
 fi
-if ! [ -f $HOME/.ssh/id_rsa ]; then
-    echo "  Creating rsa key [$HOME/.ssh/id_rsa]"
-    ssh-keygen -t rsa -f $HOME/.ssh/id_rsa -P ""
-fi
-echo "  Removing any old host keys for [$SRV_IP]"
-ls -l $HOME/.ssh/
-chown $USER:$USER $HOME/.ssh/known_hosts
-ssh-keygen -f "$HOME/.ssh/known_hosts" -R $SRV_IP
-chown $USER:$USER $HOME/.ssh/known_hosts
-ls -l $HOME/.ssh/
-
-echo "  Getting new host keys for [$SRV_IP]"
-sleep 5
-ssh-keyscan -t rsa -H $SRV_IP >> $HOME/.ssh/known_hosts
-
-echo "  copying user key to [root@$SRV_IP]"
-sleep 5
-export SSHPASS=$SRV_PWD
-sshpass -e ssh-copy-id -i $HOME/.ssh/id_rsa root@$SRV_IP
 
 ## RUN FIRSTBOOT SCRIPT
 echo "Running first boot script"
