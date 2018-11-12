@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "af536c42_6de77859",
+        "filename": "install_server_os.sh",
+        "patchSetId": 6
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 45
+      },
+      "writtenOn": "2018-11-12T14:10:16Z",
+      "side": 1,
+      "message": "what $USER is this running as?  There may not be a group with the same name.  You should get the exact group name, or else leave the group out of the chown.",
+      "revId": "f3f657f3a459dd0d4082bd7ae35e10d2f2461b4c",
+      "serverId": "4cada01b-0314-4fe0-84a1-f9ddc89863f9",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f8986a45_963a8799",
+        "filename": "install_server_os.sh",
+        "patchSetId": 6
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 45
+      },
+      "writtenOn": "2018-11-12T14:10:16Z",
+      "side": 1,
+      "message": "same comment as above",
+      "revId": "f3f657f3a459dd0d4082bd7ae35e10d2f2461b4c",
+      "serverId": "4cada01b-0314-4fe0-84a1-f9ddc89863f9",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e29bb916_5db9f8ea",
+        "filename": "install_server_os.sh",
+        "patchSetId": 6
+      },
+      "lineNbr": 383,
+      "author": {
+        "id": 45
+      },
+      "writtenOn": "2018-11-12T14:10:16Z",
+      "side": 1,
+      "message": "Don\u0027t you need to re-evaluate \"pingstat\" here?",
+      "revId": "f3f657f3a459dd0d4082bd7ae35e10d2f2461b4c",
+      "serverId": "4cada01b-0314-4fe0-84a1-f9ddc89863f9",
+      "unresolved": false
+    }
+  ]
+}
