@@ -15,9 +15,9 @@
 # limitations under the License.
 
 #
-# Script to apply Dell BIOS and/or RAID settings.
+# Script to apply HPE BIOS and/or RAID settings.
 #
-# usage:  ./apply_dellxml.sh [--rc settingsfile] --template templatefile [--no-confirm] [--no-apply-hw] [--help]
+# usage:  ./apply_hpejson.sh [--rc settingsfile] --template templatefile [--no-confirm] [--no-apply-hw] [--help]
 #
 
 # default behavior will require confirmation before starting
@@ -53,7 +53,7 @@ case $key in
     shift # past argument
     ;;
     --help)
-    echo "usage:  ./apply_dellxml.sh [--rc settingsfile] --template templatefile [--no-confirm] [--no-apply-hw] [--help]"
+    echo "usage:  ./apply_hpejson.sh [--rc settingsfile] --template templatefile [--no-confirm] [--no-apply-hw] [--help]"
     exit 0
     ;;
     *)    # unknown option
@@ -78,7 +78,7 @@ CHECKLIST="SRV_NAME SRV_OOB_IP SRV_OOB_USR SRV_OOB_PWD BUILD_WEBIP BUILD_WEBPORT
 for VAR in $CHECKLIST; do
     if [ -z "${!VAR}" ] ; then
         echo "ERROR:  Invalid or missing variable [$VAR] = [${!VAR}] in rcfile [$RCFILE]"
-        echo "usage:  ./apply_dellxml.sh [--rc settingsfile] --template templatefile [--no-confirm] [--no-apply-hw] [--help]"
+        echo "usage:  ./apply_hpejson.sh [--rc settingsfile] --template templatefile [--no-confirm] [--no-apply-hw] [--help]"
         exit 1
     fi
 done
@@ -86,7 +86,7 @@ done
 # CHECK IF TEMPLATE PASSED AND EXISTS
 if [ -z "$TEMPLATE" ] || ! [ -f "$TOOLS_ROOT/$TEMPLATE" ]; then
     echo "ERROR:  Invalid or missing template file [$TOOLS_ROOT/$TEMPLATE]"
-    echo "usage:  ./apply_dellxml.sh [--rc settingsfile] --template templatefile [--no-confirm] [--no-apply-hw] [--help]"
+    echo "usage:  ./apply_hpejson.sh [--rc settingsfile] --template templatefile [--no-confirm] [--no-apply-hw] [--help]"
     exit 1
 else
     echo "Using template [$TOOLS_ROOT/$TEMPLATE]"
@@ -94,13 +94,13 @@ fi
 
 # SET ADDITIONAL VARIABLES BASED ON RC FILE
 SRV_IPXE_URL=http://$BUILD_WEBIP:$BUILD_WEBPORT/ipxe-$SRV_IPXE_INF-$SRV_VLAN.efi
-XMLFILE=$SRV_NAME.${TEMPLATE%\.template}
+JSONFILE=$SRV_NAME.${TEMPLATE%\.template}
 
 if [ -z "$NO_CONFIRM" ]; then
     echo ""
-    read -r -p "Preparing to apply xml file [$TEMPLATE] to server [$SRV_NAME] using oob ip [$SRV_OOB_IP].  Are you sure? [y/N] " response
+    read -r -p "Preparing to apply json file [$TEMPLATE] to server [$SRV_NAME] using oob ip [$SRV_OOB_IP].  Are you sure? [y/N] " response
     case "$response" in
-        [yY][eE][sS]|[yY]) 
+        [yY][eE][sS]|[yY])
             ;;
         *)
             echo "Script aborted!"
@@ -110,28 +110,28 @@ if [ -z "$NO_CONFIRM" ]; then
     echo ""
 else
     i="10"
-    echo -n "WARNING:  Preparing to apply xml to server [$SRV_NAME] using oob ip [$SRV_OOB_IP].  Beginning in $i seconds "
+    echo -n "WARNING:  Preparing to apply json to server [$SRV_NAME] using oob ip [$SRV_OOB_IP].  Beginning in $i seconds "
     while [ $i -gt 0 ]; do
         echo -n "."; sleep 1; i=$[$i-1]
     done
     echo ""
 fi
 
-echo "Beginning create and apply xlm file to server at" `date`
+echo "Beginning create and apply json file to server at" `date`
 STIME=$(date +%s)
 
-## CREATE HARDWARE CONFIG XML FILE FOR USE WITH REDFISH
-echo "Creating server BIOS/RAID settings file [$BUILD_ROOT/$XMLFILE] for server [$SRV_NAME]"
+## CREATE HARDWARE CONFIG JSON FILE FOR USE WITH REDFISH
+echo "Creating server BIOS/RAID settings file [$BUILD_ROOT/$JSONFILE] for server [$SRV_NAME]"
 mkdir -p $BUILD_ROOT
-rm -f $BUILD_ROOT/$XMLFILE
-cp -f $TOOLS_ROOT/$TEMPLATE $BUILD_ROOT/$XMLFILE
+rm -f $BUILD_ROOT/$JSONFILE
+cp -f $TOOLS_ROOT/$TEMPLATE $BUILD_ROOT/$JSONFILE
 
 for VAR in $(set | grep -P "^SRV_|^BUILD_" | cut -f 1 -d'='); do
-    sed -i -e "s|@@$VAR@@|${!VAR}|g" $BUILD_ROOT/$XMLFILE
+    sed -i -e "s|@@$VAR@@|${!VAR}|g" $BUILD_ROOT/$JSONFILE
 done
 
 ## CHECK THAT ALL VALUES WERE REPLACED
-MISSING=$(grep -Po "@@.*?@@" $BUILD_ROOT/$XMLFILE | sort | uniq)
+MISSING=$(grep -Po "@@.*?@@" $BUILD_ROOT/$JSONFILE | sort | uniq)
 if [ -n "$MISSING" ] ; then
     echo "ERROR:  Required variable(s) in template [$TEMPLATE] were not located in the resource file [$RCFILE]"
     echo ${MISSING//@@/} | xargs -n 1 | sed -e 's/^/        /g'
@@ -140,18 +140,17 @@ fi
 
 if [ -z "$NO_APPLY_HW" ]; then
 
-    ## PUSH HARDWARE CONFIG XML USING REDFISH - BYPASS PROXY FOR INTERNAL CONNECTION TO IDRAC
-    echo "Applying server settings file [$BUILD_ROOT/$XMLFILE] to [$SRV_OOB_IP]"
+    ## PUSH HARDWARE CONFIG JSON USING REDFISH - BYPASS PROXY FOR INTERNAL CONNECTION TO IDRAC
+    echo "Applying server settings file [$BUILD_ROOT/$JSONFILE] to [$SRV_OOB_IP]"
     echo "This step could take up to 10 minutes"
-    HTTPS_PROXY= https_proxy= python -u "$DELL_ROOT/Redfish Python/ImportSystemConfigurationLocalFilenameREDFISH.py" \
-        -ip $SRV_OOB_IP -u $SRV_OOB_USR -p $SRV_OOB_PWD -t ALL -f $BUILD_ROOT/$XMLFILE -s Forced 2>&1 | \
-        awk '{if (NF>0) {print $0; fflush();}} /FAIL/ {T=1;} END {exit $T;}'
+    HTTPS_PROXY= https_proxy= PYTHONPATH=$HPE_ROOT/examples/Redfish/ python -u "$TOOLS_ROOT/set_hpe_config.py" \
+        -ip $SRV_OOB_IP -u $SRV_OOB_USR -p $SRV_OOB_PWD -f $BUILD_ROOT/$JSONFILE 2>&1
     if [ "$?" -ne 0 ]; then
         echo "ERROR:  failed applying server BIOS/RAID settings"
         exit 1
     fi
 else
-    ## SKIPPING REBOOT 
+    ## SKIPPING REBOOT
     echo "WARNING:  Skipping application of hardware settings - normally used for testing only"
 fi
 

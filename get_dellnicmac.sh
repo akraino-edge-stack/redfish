@@ -78,7 +78,7 @@ if [ -z "$FQDD" ] ; then
 fi
 
 ## GET NIC SETTINGS USING REDFISH - BYPASS PROXY FOR INTERNAL CONNECTION TO IDRAC
-NIC_DETAILS=$(HTTPS_PROXY= https_proxy= python "$DELL_ROOT/Redfish Python/GetEthernetInterfacesREDFISH.py"  -ip $SRV_OOB_IP -u $SRV_OOB_USR -p $SRV_OOB_PWD -d $FQDD)
+NIC_DETAILS=$(HTTPS_PROXY= https_proxy= python -u "$DELL_ROOT/Redfish Python/GetEthernetInterfacesREDFISH.py"  -ip $SRV_OOB_IP -u $SRV_OOB_USR -p $SRV_OOB_PWD -d $FQDD)
 if [ "$?" -ne 0 ]; then
     echo "ERROR:  failed to get nic settings"
     exit 1

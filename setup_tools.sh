@@ -63,11 +63,17 @@ mkdir -p $WEB_ROOT
 mkdir -p $DHCP_ROOT
 mkdir -p $BUILD_ROOT
 
-## CHECK XORRISO INSTALLED
-if ! dpkg -l | grep xorriso >>/dev/null; then
-    echo "FAILED:  required package xorriso not found.  try sudo 'apt-get install xorriso -y'"
-    exit 1
-fi
+## CHECK THAT REQUIRED PACKAGES ARE INSTALLED
+PACKAGES="xorriso sshpass python-requests coreutils"
+for PKG in $PACKAGES ; do
+    if ! dpkg -l | grep $PKG >>/dev/null; then
+        echo "Attempting to install missing package $PKG"
+        if ! apt-get install -y $PKG; then
+            echo "FAILED:  required package $PKG not found.  try sudo 'apt-get install $PKG -y'"
+            exit 1
+        fi
+    fi
+done
 
 ## DOWNLOAD TOOLS TO TOOLS_ROOT IF TOOLS FOLDER MISSING
 if [ ! -d "$TOOLS_ROOT" ]; then
@@ -84,13 +90,35 @@ fi
 if [ ! -d "$DELL_ROOT" ]; then
     echo "Cloning Dell redfish source from [$DELL_GIT] to [$DELL_ROOT]"
     git clone $DELL_GIT $DELL_ROOT
+
+    if [ -n "DELL_GIT_COMMIT" ]; then
+        echo "Using specific commit id [$DELL_GIT_COMMIT]"
+        (cd $DELL_ROOT; git checkout $DELL_GIT_COMMIT)
+    fi
+
+    ## PATCH STATUS REPORTING DELAY TO 15 SECS (INSTEAD OF 3)
+    sed -i -e 's/time.sleep(3)/time.sleep(15)/g' "$DELL_ROOT/Redfish Python/ImportSystemConfigurationLocalFilenameREDFISH.py"
 fi
 if [ ! -f "$DELL_ROOT/Redfish Python/ImportSystemConfigurationLocalFilenameREDFISH.py" ]; then
     echo "ERROR:  failed cloning Dell redfish tools from [$DELL_GIT] to [$DELL_ROOT]"
     exit 1
-else
-    ## PATCH STATUS REPORTING DELAY TO 15 SECS (INSTEAD OF 3)
-    sed -i -e 's/time.sleep(3)/time.sleep(15)/g' "$DELL_ROOT/Redfish Python/ImportSystemConfigurationLocalFilenameREDFISH.py"
+fi
+
+## DOWNLOAD HPE REDFISH TOOLS_ROOT IF HPE FOLDER MISSING
+if [ ! -d "$HPE_ROOT" ]; then
+    echo "Cloning HPE redfish tools from [$HPE_GIT] to [$HPE_ROOT]"
+    git clone $HPE_GIT $HPE_ROOT
+
+    ## BUILD HPE TOOLS
+    (
+    cd $HPE_ROOT
+    python -u setup.py sdist --formats=zip
+    pip install $HPE_ROOT/dist/python-ilorest-library-*.zip
+    )
+fi
+if [ ! -f "$HPE_ROOT/examples/Redfish/_redfishobject.py" ]; then
+    echo "ERROR:  failed cloning HPE redfish tools from [$HPE_GIT] to [$HPE_ROOT]"
+    exit 1
 fi
 
 echo "Tools are ready in [$REDFISH_ROOT]"

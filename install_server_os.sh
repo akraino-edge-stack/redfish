@@ -27,10 +27,12 @@
 # SET DEFAULT VALUES
 UBUNTU_ISO=${UBUNTU_ISO:-}  ## IF NOT SET, UBUNTU_URL WILL BE USED TO DOWNLOAD DEFAULT ISO
 
-# SETUP LOGGING (SAVE ORIGINAL STDIN AND STDOUT AS FD 3 AND 4)
+# SETUP LOGGING FOR INTERACTIVE SHELLS (SAVE ORIGINAL STDIN AND STDOUT AS FD 3 AND 4)
 MYLOGFILE="`basename $0`"; MYLOGFILE="${MYLOGFILE%.*}-`date +%FT%H-%M-%S-%2N`.log"
-#exec 3>&1 4>&2 1> >(tee -a "$MYLOGFILE") 2>&1
-#echo "Logging to $PWD/$MYLOGFILE"
+if [[ $- = *i* ]]; then
+    exec 3>&1 4>&2 1> >(tee -a "$MYLOGFILE") 2>&1
+    echo "Logging to $PWD/$MYLOGFILE"
+fi
 
 echo "Beginning $0 as user [$USER] in pwd [$PWD] with home [$HOME]"
 
@@ -86,11 +88,15 @@ if [ -n "$RCFILE" ] && [ -f "$RCFILE" ]; then
     source $RCFILE
 fi
 
-if [ -z "$SRV_NAME" ] || [ -z "$SRV_OOB_IP" ] || [ -z "$SRV_OOB_USR" ] || [ -z "$SRV_OOB_PWD" ] || [ -z "$SRV_IPXE_INF" ] ; then
-    echo "ERROR:  Invalid or missing variables in rcfile [$RCFILE]"
-    echo "usage:  ./install_regionserver.sh  [--rc settingsfile] [--no-confirm] [--no-apply-hw] [--help]"
-    exit 1
-fi
+# CHECK A FEW REQUIRED VARIABLES - BUT NOT ALL
+CHECKLIST="SRV_NAME SRV_OOB_IP SRV_OOB_USR SRV_OOB_PWD SRV_IPXE_INF BUILD_WEBPORT"
+for VAR in $CHECKLIST; do
+    if [ -z "${!VAR}" ] ; then
+        echo "ERROR:  Invalid or missing variable [$VAR] = [${!VAR}] in rcfile [$RCFILE]"
+        echo "usage:  ./install_regionserver.sh  [--rc settingsfile] [--no-confirm] [--no-apply-hw] [--help]"
+        exit 1
+    fi
+done
 
 ## FIND BUILD_WEBIP IF NOT PROVIDED
 if [ -z "$BUILD_WEBIP" ]; then
@@ -145,7 +151,7 @@ else
     ifconfig | grep --no-group-separator -B1 ":$BUILD_WEBIP "
 fi
 
-## COLLECT ANY ADDITIONAL SERVER DATA NEEDED - IE LOOKUP MAC FOR DELL NIC
+## COLLECT ANY ADDITIONAL SERVER DATA NEEDED - FOR EXAMPLE, LOOKUP MAC FOR DELL NIC
 case $SRV_OEM in
     Dell|DELL)
     if [ -z "$SRV_MAC" ]; then
@@ -157,8 +163,10 @@ case $SRV_OEM in
     fi
     ;;
     HP|HPE)
-    echo "ERROR:  HPE SERVER BUILDS ARE NOT SUPPORTED YET!!!"
-    exit 1;
+    if [ -z "$SRV_MAC" ]; then
+        echo "ERROR:  HPE required variable SRV_MAC missing from rc file [$RCFILE]"
+        exit 1;
+    fi
     ;;
     *)    # unknown option
     echo "ERROR:  Unknown server oem [$SRV_OEM]"
@@ -232,21 +240,29 @@ if [ ! -f "$DHCP_ROOT/dhcpd.conf" ]; then
     cp -f $TOOLS_ROOT/dhcpd.conf.template $DHCP_ROOT/dhcpd.conf
 fi
 
+SRV_DNSCSV=$(echo $SRV_DNS | tr ' ' ',')
 echo "Updating dhcp configuration [$DHCP_ROOT/dhcpd.conf] with subnet [$SRV_SUBNET]"
 perl -i -p0e "s/^subnet $SRV_SUBNET .*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
 cat >>$DHCP_ROOT/dhcpd.conf <<EOF
 subnet $SRV_SUBNET netmask $SRV_NETMASK {
     option subnet-mask $SRV_NETMASK;
     option routers $SRV_GATEWAY;
-    option domain-name-servers $SRV_DNS;
+    option domain-name-servers $SRV_DNSCSV;
     option domain-name "$SRV_DOMAIN";
     option ipxe-web-server "$BUILD_WEBIP:$BUILD_WEBPORT";
 }
 EOF
 
+## CHECK THAT SRV_BLD_SCRIPT EXISTS
+if [ ! -f "$WEB_ROOT/$SRV_BLD_SCRIPT" ]; then
+    echo "ERROR: Missing SRV_BLD_SCRIPT [$SRV_BLD_SCRIPT] from web root [$WEB_ROOT]"
+    exit 1
+fi
+
 echo "Updating dhcp configuration [$DHCP_ROOT/dhcpd.conf] with server [$SRV_NAME]"
-## DELETE ANY HOST ENTRY WITH THE SAME MAC ADDRESS (IGNORING THE NAME WHICH COULD CHANGE)
+## DELETE ANY HOST ENTRY WITH THE SAME MAC ADDRESS OR NAME
 perl -i -p0e "s/^host.*?$SRV_MAC.*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
+perl -i -p0e "s/^host *$SRV_NAME *{.*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
 cat >>$DHCP_ROOT/dhcpd.conf <<EOF
 host $SRV_NAME {
     hardware ethernet $SRV_MAC;
@@ -273,13 +289,36 @@ if ! docker ps | grep akraino-dhcp >/dev/null; then
 fi
 
 ## CREATE CONFIG FILES AND APPLY UNLESS CALLED WITH --no-apply-hw
-. $TOOLS_ROOT/apply_dellxml.sh --template $SRV_BIOS_TEMPLATE
-echo "Completed update with status [$?]"
-sleep 20
+case $SRV_OEM in
+    Dell|DELL)
+        if [ -n "$SRV_BIOS_TEMPLATE" ]; then
+            . $TOOLS_ROOT/apply_dellxml.sh --template $SRV_BIOS_TEMPLATE
+            echo "Completed update with status [$?]"
+            sleep 80
+        fi
 
-. $TOOLS_ROOT/apply_dellxml.sh --template $SRV_BOOT_TEMPLATE
-echo "Completed update with status [$?]"
-sleep 20
+        if [ -n "$SRV_BOOT_TEMPLATE" ]; then
+            . $TOOLS_ROOT/apply_dellxml.sh --template $SRV_BOOT_TEMPLATE
+            echo "Completed update with status [$?]"
+            sleep 20
+        fi
+    ;;
+    HP|HPE)
+        if [ -n "$SRV_BIOS_TEMPLATE" ]; then
+            . $TOOLS_ROOT/apply_hpejson.sh --template $SRV_BIOS_TEMPLATE
+            echo "Completed update with status [$?]"
+        fi
+        if [ -n "$SRV_BOOT_TEMPLATE" ]; then
+            . $TOOLS_ROOT/apply_hpejson.sh --template $SRV_BOOT_TEMPLATE
+            echo "Completed update with status [$?]"
+            echo "Waiting for server to reboot with new settings."
+        fi
+    ;;
+    *)  # unknown option
+        echo "ERROR:  Unknown server oem [$SRV_OEM]"
+        exit 1;
+    ;;
+esac
 
 if [ -z "$NO_APPLY_HW" ]; then
 
@@ -287,10 +326,16 @@ if [ -z "$NO_APPLY_HW" ]; then
     echo "Waiting for server [$SRV_IP] to download [$SRV_NAME.firstboot.sh] from web container at" `date`
     echo "This step could take up to 15 minutes"
     WEBLOG_START=$(date +%FT%T)
+    WSTART=$(date +%s)
     # ONLY CHECK ENTRIES AFTER WEBLOG_START TO AVOID PAST BUILDS, CHECK UP TO LAST 10 ENTRIES TO AVOID MISSING MESSAGES AFTER RESTART
-    while ( ! (docker logs --since "$WEBLOG_START" --tail 10 -f akraino-httpboot &) | awk "{print \$0; fflush();} /^$SRV_IP.*GET \/$SRV_NAME.firstboot.sh/ {exit;}" ); do
+    while [ $(date +%s) -lt $[$WSTART + 900] ] && ( ! (timeout 900s docker logs --since "$WEBLOG_START" --tail 10 -f akraino-httpboot &) | awk "{print \$0; fflush();} /^$SRV_IP.*GET \/$SRV_NAME.firstboot.sh/ {exit;}" ); do
         echo "WARNING:  Web server was restarted..."
     done
+
+    if [ $(date +%s) -gt $[$WSTART + 900] ]; then
+        echo "ERROR:  Timeout waiting for server to download firstboot.sh"
+        exit 1
+    fi
 
     ## WAIT FOR SERVER TO START REBOOT
     echo "Waiting for server [$SRV_IP] to reboot" `date`
@@ -344,14 +389,13 @@ if [ "$?" -ne 0 ]; then
 fi
 
 ## DELETE HOST ENTRY FROM DHCP
-echo "Removing dhcp configuration for server [$SRV_NAME] from [$DHCP_ROOT/dhcpd.conf]"
+echo "Removing dhcp configuration for server [$SRV_NAME] [$SRV_MAC] from [$DHCP_ROOT/dhcpd.conf]"
 perl -i -p0e "s/^host.*?$SRV_MAC.*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
+perl -i -p0e "s/^host *$SRV_NAME *{.*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
 
-## START/RESTART DHCP SERVICE
+## RESTART DHCP SERVICE
 echo "Restarting dhcp server using folder [$DHCP_ROOT] on interface [$BUILD_INTERFACE]"
-docker stop akraino-dhcp &> /dev/null
-docker rm akraino-dhcp &> /dev/null
-docker run -dit --name akraino-dhcp --rm --net=host -v "$DHCP_ROOT":/data networkboot/dhcpd $BUILD_INTERFACE
+docker restart akraino-dhcp &> /dev/null
 
 ## DONE
 ENDTIME=$(date +%s)
@@ -360,6 +404,8 @@ echo "SUCCESS:  Try connecting with 'ssh root@$SRV_IP' as user $USER"
 echo "Elapsed time was $(( ($ENDTIME - $STARTTIME) / 60 )) minutes and $(( ($ENDTIME - $STARTTIME) % 60 )) seconds"
 
 ## RESTORE SAVED STDIN AND STDOUT (TERMINATES TEE REDIRECTION)
-#exec 1>&3 2>&4
+if [[ $- = *i* ]]; then
+    exec 1>&3 2>&4
+fi
 exit 0
 
