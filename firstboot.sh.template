@@ -42,8 +42,8 @@ apt-get install -y docker.io aufs-tools  2>&1
 echo "Checking that docker is running"
 docker ps
 
-echo "Installing sshpass, python-requests and xorriso"
-apt-get install -y sshpass python-requests python-yaml python-jinja2 xorriso  2>&1
+echo "Installing sshpass, pip, requests, yaml, jinja2 and xorriso"
+apt-get install -y sshpass python-pip python-requests python-yaml python-jinja2 xorriso  2>&1
 
 exit
 
