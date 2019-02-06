@@ -89,7 +89,7 @@ if [ -n "$RCFILE" ] && [ -f "$RCFILE" ]; then
 fi
 
 # CHECK A FEW REQUIRED VARIABLES - BUT NOT ALL
-CHECKLIST="SRV_NAME SRV_OOB_IP SRV_OOB_USR SRV_OOB_PWD SRV_IPXE_INF BUILD_WEBPORT"
+CHECKLIST="SRV_NAME SRV_OOB_IP SRV_SUBNET SRV_OOB_USR SRV_OOB_PWD SRV_IPXE_INF BUILD_WEBPORT"
 for VAR in $CHECKLIST; do
     if [ -z "${!VAR}" ] ; then
         echo "ERROR:  Invalid or missing variable [$VAR] = [${!VAR}] in rcfile [$RCFILE]"
@@ -252,6 +252,22 @@ subnet $SRV_SUBNET netmask $SRV_NETMASK {
     option ipxe-web-server "$BUILD_WEBIP:$BUILD_WEBPORT";
 }
 EOF
+
+LOCAL_INF=$(ip route get $SRV_IP | grep "$SRV_IP" | cut -f 5 -d ' ')
+LOCAL_SUBNET=$(route -n | grep " U " | grep "$LOCAL_INF" | awk '{print $1}')
+LOCAL_NETMASK=$(route -n | grep " U " | grep "$LOCAL_INF" | awk '{print $3}')
+echo "Local interface to access $SRV_IP is [$LOCAL_INF] with subnet/mask [$LOCAL_SUBNET/$LOCAL_NETMASK]"
+
+if [ "$SRV_SUBNET" != "$LOCAL_NET" ]; then
+    echo "Updating dhcp configuration [$DHCP_ROOT/dhcpd.conf] with local subnet [$LOCAL_SUBNET]"
+    perl -i -p0e "s/^subnet $LOCAL_SUBNET .*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
+    cat >>$DHCP_ROOT/dhcpd.conf <<EOF
+subnet $LOCAL_SUBNET netmask $LOCAL_NETMASK {
+    option subnet-mask $LOCAL_NETMASK;
+    option domain-name-servers $SRV_DNSCSV;
+}
+EOF
+fi
 
 ## CHECK THAT SRV_BLD_SCRIPT EXISTS
 if [ ! -f "$WEB_ROOT/$SRV_BLD_SCRIPT" ]; then
