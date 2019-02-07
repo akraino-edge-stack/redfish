@@ -18,7 +18,7 @@ set vlan @@IPXE_VLAN@@
 set nic @@IPXE_INTF@@
 echo Starting network on vlan [${vlan}] using nic [${nic}]...
 vcreate --tag ${vlan} ${nic} ||
-ifconf --configurator dhcp ${nic}-${vlan} ||
+ifconf --configurator dhcp ${nic}-${vlan} || ifstat
 isset ${filename} && chain ${filename} || echo Boot file [${filename}] does not exist or is invalid...
 prompt --key 0x02 --timeout 0 Press Ctrl-B for the iPXE command line... && shell || 
 
