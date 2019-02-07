@@ -15,6 +15,7 @@
 <SystemConfiguration Model="PowerEdge R740" ServiceTag="XXXXXXX" TimeStamp="Thu Jun  8 11:05:19 2018">
     <!--Export type is Clone,Selective-->
     <Component FQDD="BIOS.Setup.1-1">
+        <Attribute Name="HttpDev1EnDis">Enabled</Attribute>
         <Attribute Name="HttpDev1Interface">@@SRV_HTTP_BOOT_DEV@@</Attribute>
         <Attribute Name="HttpDev1Protocol">IPv4</Attribute>
         <Attribute Name="HttpDev1VlanEnDis">Enabled</Attribute>
