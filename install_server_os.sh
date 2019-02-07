@@ -253,12 +253,12 @@ subnet $SRV_SUBNET netmask $SRV_NETMASK {
 }
 EOF
 
-LOCAL_INF=$(ip route get $SRV_IP | grep "$SRV_IP" | cut -f 5 -d ' ')
-LOCAL_SUBNET=$(route -n | grep " U " | grep "$LOCAL_INF" | awk '{print $1}')
-LOCAL_NETMASK=$(route -n | grep " U " | grep "$LOCAL_INF" | awk '{print $3}')
+LOCAL_INF=$(ip route get $SRV_IP | grep "$SRV_IP" | awk '{print $3}')
+LOCAL_SUBNET=$(route -n | grep " U " | grep "$LOCAL_INF" | head -n 1 | awk '{print $1}')
+LOCAL_NETMASK=$(route -n | grep " U " | grep "$LOCAL_INF" | head -n 1 | awk '{print $3}')
 echo "Local interface to access $SRV_IP is [$LOCAL_INF] with subnet/mask [$LOCAL_SUBNET/$LOCAL_NETMASK]"
 
-if [ "$SRV_SUBNET" != "$LOCAL_NET" ]; then
+if [ "$SRV_SUBNET" != "$LOCAL_SUBNET" ] && [[ $LOCAL_SUBNET =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
     echo "Updating dhcp configuration [$DHCP_ROOT/dhcpd.conf] with local subnet [$LOCAL_SUBNET]"
     perl -i -p0e "s/^subnet $LOCAL_SUBNET .*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
     cat >>$DHCP_ROOT/dhcpd.conf <<EOF
