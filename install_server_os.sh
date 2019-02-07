@@ -253,20 +253,24 @@ subnet $SRV_SUBNET netmask $SRV_NETMASK {
 }
 EOF
 
-LOCAL_INF=$(ip route get $SRV_IP | grep "$SRV_IP" | awk '{print $3}')
-LOCAL_SUBNET=$(route -n | grep " U " | grep "$LOCAL_INF" | head -n 1 | awk '{print $1}')
-LOCAL_NETMASK=$(route -n | grep " U " | grep "$LOCAL_INF" | head -n 1 | awk '{print $3}')
-echo "Local interface to access $SRV_IP is [$LOCAL_INF] with subnet/mask [$LOCAL_SUBNET/$LOCAL_NETMASK]"
+if ! route -n | grep "$SRV_SUBNET" | grep " U " >/dev/null ; then
+    echo "Subner [$SRV_SUBNET] is not a local network, attempting to find local subnet for dhcp service"
+    echo "The dhcp service requires at least one subnet in the configuration to be a local subnet"
+    LOCAL_INF=$(ip route get $SRV_IP | grep "$SRV_IP" | awk '{print $3}')
+    LOCAL_SUBNET=$(route -n | grep " U " | grep "$LOCAL_INF" | head -n 1 | awk '{print $1}')
+    LOCAL_NETMASK=$(route -n | grep " U " | grep "$LOCAL_INF" | head -n 1 | awk '{print $3}')
+    echo "Local interface to access $SRV_IP is [$LOCAL_INF] with subnet/mask [$LOCAL_SUBNET/$LOCAL_NETMASK]"
 
-if [ "$SRV_SUBNET" != "$LOCAL_SUBNET" ] && [[ $LOCAL_SUBNET =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
-    echo "Updating dhcp configuration [$DHCP_ROOT/dhcpd.conf] with local subnet [$LOCAL_SUBNET]"
-    perl -i -p0e "s/^subnet $LOCAL_SUBNET .*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
-    cat >>$DHCP_ROOT/dhcpd.conf <<EOF
+    if [ "$SRV_SUBNET" != "$LOCAL_SUBNET" ] && [[ $LOCAL_SUBNET =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
+        echo "Updating dhcp configuration [$DHCP_ROOT/dhcpd.conf] with local subnet [$LOCAL_SUBNET]"
+        perl -i -p0e "s/^subnet $LOCAL_SUBNET .*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
+        cat >>$DHCP_ROOT/dhcpd.conf <<EOF
 subnet $LOCAL_SUBNET netmask $LOCAL_NETMASK {
     option subnet-mask $LOCAL_NETMASK;
     option domain-name-servers $SRV_DNSCSV;
 }
 EOF
+    fi
 fi
 
 ## CHECK THAT SRV_BLD_SCRIPT EXISTS
