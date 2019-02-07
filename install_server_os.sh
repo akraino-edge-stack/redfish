@@ -151,6 +151,13 @@ else
     ifconfig | grep --no-group-separator -B1 ":$BUILD_WEBIP "
 fi
 
+## CHECK THAT SERVER OOB INTERFACE IS REACHABLE
+echo "Checking access to server oob ip [$SRV_OOB_IP]"
+if ! ping -c 3 $SRV_OOB_IP | grep time= ; then
+    echo "ERROR:  Unable to ping server oob ip [$SRV_OOB_IP]"
+    exit 1;
+fi
+
 ## COLLECT ANY ADDITIONAL SERVER DATA NEEDED - FOR EXAMPLE, LOOKUP MAC FOR DELL NIC
 case $SRV_OEM in
     Dell|DELL)
