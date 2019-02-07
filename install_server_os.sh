@@ -360,7 +360,7 @@ if [ -z "$NO_APPLY_HW" ]; then
     ## WAIT FOR SERVER TO START REBOOT
     echo "Waiting for server [$SRV_IP] to reboot" `date`
     echo "Waiting for server to shutdown..."
-    (ping -i 5 $SRV_IP &) | awk '{print $0; fflush();} /Destination Host Unreachable/ {x++; if (x>3) {exit;}}'
+    (ping -O -i 5 $SRV_IP &) | awk '{print $0; fflush();} /no answer/ {x++; if (x>3) {exit;}}'
 
     # wait for previous ping to abort
     sleep 10
