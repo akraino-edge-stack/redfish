@@ -84,12 +84,12 @@ for VAR in $CHECKLIST; do
 done
 
 # CHECK IF TEMPLATE PASSED AND EXISTS
-if [ -z "$TEMPLATE" ] || ! [ -f "$TOOLS_ROOT/$TEMPLATE" ]; then
-    echo "ERROR:  Invalid or missing template file [$TOOLS_ROOT/$TEMPLATE]"
+if [ -z "$TEMPLATE" ] || ! [ -f "$REDFISH_ROOT/$TEMPLATE" ]; then
+    echo "ERROR:  Invalid or missing template file [$REDFISH_ROOT/$TEMPLATE]"
     echo "usage:  ./apply_dellxml.sh [--rc settingsfile] --template templatefile [--no-confirm] [--no-apply-hw] [--help]"
     exit 1
 else
-    echo "Using template [$TOOLS_ROOT/$TEMPLATE]"
+    echo "Using template [$REDFISH_ROOT/$TEMPLATE]"
 fi
 
 # SET ADDITIONAL VARIABLES BASED ON RC FILE
@@ -124,7 +124,7 @@ STIME=$(date +%s)
 echo "Creating server BIOS/RAID settings file [$BUILD_ROOT/$XMLFILE] for server [$SRV_NAME]"
 mkdir -p $BUILD_ROOT
 rm -f $BUILD_ROOT/$XMLFILE
-cp -f $TOOLS_ROOT/$TEMPLATE $BUILD_ROOT/$XMLFILE
+cp -f $REDFISH_ROOT/$TEMPLATE $BUILD_ROOT/$XMLFILE
 
 for VAR in $(set | grep -P "^SRV_|^BUILD_" | cut -f 1 -d'='); do
     sed -i -e "s|@@$VAR@@|${!VAR}|g" $BUILD_ROOT/$XMLFILE

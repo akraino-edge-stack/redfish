@@ -48,7 +48,7 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # LOAD BUILD DEFAULT VALUES IF BUILD VARIABLES ARE NOT LOADED
-if [ -z "$REDFISH_ROOT" ]; then
+if [ -z "$AKRAINO_ROOT" ]; then
     BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
     if [ -z "$BASEDIR" ] || ! [ -f "$BASEDIR/buildrc" ]; then
         echo "ERROR:  Invalid or missing build variables rcfile [$BASEDIR/buildrc]"
@@ -88,7 +88,7 @@ sed -i 's|//#define VLAN_CMD|#define VLAN_CMD|g' $IPXE_ROOT/src/config/general.h
 rm -f $IPXE_ROOT/boot.ipxe
 sed -e "s|@@IPXE_VLAN@@|$IPXE_VLAN|g" \
     -e "s|@@IPXE_INTF@@|$IPXE_INTF|g" \
-    $TOOLS_ROOT/boot.ipxe.template > $IPXE_ROOT/boot.ipxe
+    $REDFISH_ROOT/boot.ipxe.template > $IPXE_ROOT/boot.ipxe
 if [ ! -f "$IPXE_ROOT/boot.ipxe" ]; then
     echo "ERROR:  failed creating script [$IPXE_ROOT/boot.ipxe]"
     exit 1

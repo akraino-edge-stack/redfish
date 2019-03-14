@@ -115,7 +115,7 @@ mkdir -p $UBUNTU_FOLDER
 
 ## COPY FILES
 echo "Extracting files to [$WEB_ROOT]"
-cp -f $TOOLS_ROOT/sources.list $WEB_ROOT
+cp -f $REDFISH_ROOT/sources.list $WEB_ROOT
 xorriso -osirrox on:auto_chmod_on -indev $UBUNTU_ISO -find / -type d -exec chmod u+rwx -- -extract / $UBUNTU_FOLDER -rollback_end 2>&1 | sed -e "s/^/    /g"
 
 ## EXPAND KERNEL AND INITRD (HWE AND STANDARD)
@@ -136,13 +136,13 @@ sed -e "s|@@KERNEL@@|$HWE_KERNEL|g" \
     -e "s|@@INITRD@@|$HWE_INITRD|g" \
     -e "s|@@BASE_KERNEL@@|$HWE_OIMAGE|g" \
     -e "s|@@UBUNTU_ROOT@@|$UBUNTU_ROOT|g" \
-    $TOOLS_ROOT/script.ipxe.template > $WEB_ROOT/script-hwe-$ISO_VERSION-$ISO_ARCH.ipxe
+    $REDFISH_ROOT/script.ipxe.template > $WEB_ROOT/script-hwe-$ISO_VERSION-$ISO_ARCH.ipxe
 
 sed -e "s|@@KERNEL@@|$STD_KERNEL|g" \
     -e "s|@@INITRD@@|$STD_INITRD|g" \
     -e "s|@@BASE_KERNEL@@|$STD_OIMAGE|g" \
     -e "s|@@UBUNTU_ROOT@@|$UBUNTU_ROOT|g" \
-    $TOOLS_ROOT/script.ipxe.template > $WEB_ROOT/script-$ISO_VERSION-$ISO_ARCH.ipxe
+    $REDFISH_ROOT/script.ipxe.template > $WEB_ROOT/script-$ISO_VERSION-$ISO_ARCH.ipxe
 
 echo "Files for Ubuntu version [$ISO_VERSION] [$ISO_ARCH] are ready in folder [$WEB_ROOT]"
 echo "Use script-hwe-$ISO_VERSION-$ISO_ARCH.ipxe or script-$ISO_VERSION-$ISO_ARCH.ipxe in the dhcp config depending on the kernel version required."

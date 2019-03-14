@@ -43,7 +43,7 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # LOAD BUILD DEFAULT VALUES IF BUILD VARIABLES ARE NOT LOADED
-if [ -z "$REDFISH_ROOT" ]; then
+if [ -z "$AKRAINO_ROOT" ]; then
     BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
     if [ -z "$BASEDIR" ] || ! [ -f "$BASEDIR/buildrc" ]; then
         echo "ERROR:  Invalid or missing build variables rcfile [$BASEDIR/buildrc]"
@@ -53,7 +53,7 @@ if [ -z "$REDFISH_ROOT" ]; then
 fi
 
 # CHECK A FEW REQUIRED VARIABLES
-if [ -z "$WEB_ROOT" ] || [ -z "$DHCP_ROOT" ] || [ -z "$TOOLS_ROOT" ] || [ -z "$DELL_ROOT" ] || [ -z "$BUILD_ROOT" ]; then
+if [ -z "$WEB_ROOT" ] || [ -z "$DHCP_ROOT" ] || [ -z "$REDFISH_ROOT" ] || [ -z "$DELL_ROOT" ] || [ -z "$BUILD_ROOT" ]; then
     echo "ERROR:  Invalid or missing variables in rcfile [$BASEDIR/buildrc]"
     exit 1
 fi
@@ -75,18 +75,18 @@ for PKG in $PACKAGES ; do
     fi
 done
 
-## DOWNLOAD TOOLS TO TOOLS_ROOT IF TOOLS FOLDER MISSING
-if [ ! -d "$TOOLS_ROOT" ]; then
-    echo "Installing latest tools from [$REDFISH_REPO] to [$TOOLS_ROOT]"
-    mkdir -p $TOOLS_ROOT
-    curl -L "$REDFISH_REPO" | tar -xzo -C $TOOLS_ROOT 
+## DOWNLOAD TOOLS TO REDFISH_ROOT IF TOOLS FOLDER MISSING
+if [ ! -d "$REDFISH_ROOT" ]; then
+    echo "Installing latest tools from [$REDFISH_REPO] to [$REDFISH_ROOT]"
+    mkdir -p $REDFISH_ROOT
+    curl -L "$REDFISH_REPO" | tar -xzo -C $REDFISH_ROOT 
 fi
-if [ ! -f "$TOOLS_ROOT/boot.ipxe.template" ]; then
-    echo "ERROR:  failed cloning tools from [$REDFISH_GIT] to [$TOOLS_ROOT]"
+if [ ! -f "$REDFISH_ROOT/boot.ipxe.template" ]; then
+    echo "ERROR:  failed cloning tools from [$REDFISH_GIT] to [$REDFISH_ROOT]"
     exit 1
 fi
 
-## DOWNLOAD DELL REDFISH TOOLS_ROOT IF DELL FOLDER MISSING
+## DOWNLOAD DELL REDFISH REDFISH_ROOT IF DELL FOLDER MISSING
 if [ ! -d "$DELL_ROOT" ]; then
     echo "Cloning Dell redfish source from [$DELL_GIT] to [$DELL_ROOT]"
     git clone $DELL_GIT $DELL_ROOT
@@ -104,7 +104,7 @@ if [ ! -f "$DELL_ROOT/Redfish Python/ImportSystemConfigurationLocalFilenameREDFI
     exit 1
 fi
 
-## DOWNLOAD HPE REDFISH TOOLS_ROOT IF HPE FOLDER MISSING
+## DOWNLOAD HPE REDFISH REDFISH_ROOT IF HPE FOLDER MISSING
 if [ ! -d "$HPE_ROOT" ]; then
     echo "Cloning HPE redfish tools from [$HPE_GIT] to [$HPE_ROOT]"
     git clone $HPE_GIT $HPE_ROOT
@@ -121,5 +121,5 @@ if [ ! -f "$HPE_ROOT/examples/Redfish/_redfishobject.py" ]; then
     exit 1
 fi
 
-echo "Tools are ready in [$REDFISH_ROOT]"
+echo "Tools are ready in [$AKRAINO_ROOT]"
 

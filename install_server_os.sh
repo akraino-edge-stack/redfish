@@ -162,7 +162,7 @@ fi
 case $SRV_OEM in
     Dell|DELL)
     if [ -z "$SRV_MAC" ]; then
-        SRV_MAC=$(. $TOOLS_ROOT/get_dellnicmac.sh --nic $SRV_HTTP_BOOT_DEV)
+        SRV_MAC=$(. $REDFISH_ROOT/get_dellnicmac.sh --nic $SRV_HTTP_BOOT_DEV)
         if [ "$?" -ne 0 ]; then
             echo "ERROR:  Unable to get Dell nic mac address from [$SRV_OOB_IP]"
             exit 1;
@@ -182,7 +182,7 @@ case $SRV_OEM in
 esac
 
 ## UPDATE WEB ROOT WITH UBUNTU ISO
-. $TOOLS_ROOT/update_webroot.sh;
+. $REDFISH_ROOT/update_webroot.sh;
 if [ "$?" -ne 0 ]; then
     echo "ERROR:  failed to add [$UBUNTU_ISO] contents to web root"
     exit 1
@@ -190,14 +190,14 @@ fi
 
 ## CREATE IPXE FILE
 echo "Creating ixpe.efi for web root in folder [$WEB_ROOT] using interface [$SRV_IPXE_INF] and vlan [$SRV_VLAN]"
-if ! (IPXE_VLAN=$SRV_VLAN IPXE_INTF=$SRV_IPXE_INF $TOOLS_ROOT/create_ipxe.sh); then
+if ! (IPXE_VLAN=$SRV_VLAN IPXE_INTF=$SRV_IPXE_INF $REDFISH_ROOT/create_ipxe.sh); then
     echo "ERROR:  failed to add ipxe file to web root"
     exit 1
 fi
 
 ## ADD FIRSTBOOT SCRIPT TO WEB ROOT
 echo "Adding firstboot script [$SRV_NAME.firstboot.sh] to web root [$WEB_ROOT]"
-cp -f $TOOLS_ROOT/$SRV_FIRSTBOOT_TEMPLATE $WEB_ROOT/$SRV_NAME.firstboot.sh
+cp -f $REDFISH_ROOT/$SRV_FIRSTBOOT_TEMPLATE $WEB_ROOT/$SRV_NAME.firstboot.sh
 
 for VAR in $(set | grep -P "^SRV_|^BUILD_" | cut -f 1 -d'='); do
     sed -i -e "s|@@$VAR@@|${!VAR}|g" $WEB_ROOT/$SRV_NAME.firstboot.sh
@@ -213,7 +213,7 @@ fi
 
 ## CREATE SERVER SEED FILE
 echo "Creating seed file [$WEB_ROOT/$SRV_NAME.seed] for server [$SRV_NAME]"
-cp -f $TOOLS_ROOT/ubuntu.seed.template $WEB_ROOT/$SRV_NAME.seed
+cp -f $REDFISH_ROOT/ubuntu.seed.template $WEB_ROOT/$SRV_NAME.seed
 
 for VAR in $(set | grep -P "^SRV_|^BUILD_" | cut -f 1 -d'='); do
     sed -i -e "s|@@$VAR@@|${!VAR}|g" $WEB_ROOT/$SRV_NAME.seed
@@ -244,7 +244,7 @@ fi
 if [ ! -f "$DHCP_ROOT/dhcpd.conf" ]; then
     echo "Creating new dhcp configuration [$DHCP_ROOT/dhcpd.conf]"
     mkdir -p $DHCP_ROOT
-    cp -f $TOOLS_ROOT/dhcpd.conf.template $DHCP_ROOT/dhcpd.conf
+    cp -f $REDFISH_ROOT/dhcpd.conf.template $DHCP_ROOT/dhcpd.conf
 fi
 
 SRV_DNSCSV=$(echo $SRV_DNS | tr ' ' ',')
@@ -319,24 +319,24 @@ fi
 case $SRV_OEM in
     Dell|DELL)
         if [ -n "$SRV_BIOS_TEMPLATE" ]; then
-            . $TOOLS_ROOT/apply_dellxml.sh --template $SRV_BIOS_TEMPLATE
+            . $REDFISH_ROOT/apply_dellxml.sh --template $SRV_BIOS_TEMPLATE
             echo "Completed update with status [$?]"
             sleep 80
         fi
 
         if [ -n "$SRV_BOOT_TEMPLATE" ]; then
-            . $TOOLS_ROOT/apply_dellxml.sh --template $SRV_BOOT_TEMPLATE
+            . $REDFISH_ROOT/apply_dellxml.sh --template $SRV_BOOT_TEMPLATE
             echo "Completed update with status [$?]"
             sleep 20
         fi
     ;;
     HP|HPE)
         if [ -n "$SRV_BIOS_TEMPLATE" ]; then
-            . $TOOLS_ROOT/apply_hpejson.sh --template $SRV_BIOS_TEMPLATE
+            . $REDFISH_ROOT/apply_hpejson.sh --template $SRV_BIOS_TEMPLATE
             echo "Completed update with status [$?]"
         fi
         if [ -n "$SRV_BOOT_TEMPLATE" ]; then
-            . $TOOLS_ROOT/apply_hpejson.sh --template $SRV_BOOT_TEMPLATE
+            . $REDFISH_ROOT/apply_hpejson.sh --template $SRV_BOOT_TEMPLATE
             echo "Completed update with status [$?]"
             echo "Waiting for server to reboot with new settings."
         fi
