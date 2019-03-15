@@ -44,8 +44,8 @@ SRV_BLD_INF=enp94s0f0
 SRV_BOOT_DEVICE=sda
 
 # ipxe script to use - based on the os version and kernel to install
-# valid options are script-hwe-16.04.5-amd64.ipxe or script-16.04.5-amd64.ipxe
-SRV_BLD_SCRIPT=script-hwe-16.04.5-amd64.ipxe
+# valid options are script-hwe-16.04.6-amd64.ipxe or script-16.04.6-amd64.ipxe
+SRV_BLD_SCRIPT=script-hwe-16.04.6-amd64.ipxe
 
 # template xml file to set bios and raid configuration settings
 SRV_BIOS_TEMPLATE=dell_r740_g14_uefi_base.xml.template
