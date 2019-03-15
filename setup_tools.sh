@@ -64,9 +64,10 @@ mkdir -p $DHCP_ROOT
 mkdir -p $BUILD_ROOT
 
 ## CHECK THAT REQUIRED PACKAGES ARE INSTALLED
-PACKAGES="xorriso sshpass python-requests coreutils"
+echo "Checking for known required packages"
+PACKAGES="xorriso sshpass python-requests python-pip coreutils"
 for PKG in $PACKAGES ; do
-    if ! dpkg -l | grep $PKG >>/dev/null; then
+    if ! apt list $PKG 2>/dev/null | grep "$PKG.*installed.*" ; then
         echo "Attempting to install missing package $PKG"
         if ! apt-get install -y $PKG; then
             echo "FAILED:  required package $PKG not found.  try sudo 'apt-get install $PKG -y'"
