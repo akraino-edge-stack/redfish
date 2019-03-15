@@ -35,5 +35,5 @@ export REGION_ROOT=${REGION_ROOT:-$WEB_ROOT/region}
 export BUILD_ROOT=${BUILD_ROOT:-$AKRAINO_ROOT/server-config}
 export IPXE_ROOT=${IPXE_ROOT:-$AKRAINO_ROOT/ipxe}
 
-export UBUNTU_URL=${UBUNTU_URL:-http://releases.ubuntu.com/16.04/ubuntu-16.04.5-server-amd64.iso}
+export UBUNTU_URL=${UBUNTU_URL:-http://releases.ubuntu.com/16.04/ubuntu-16.04.6-server-amd64.iso}
 export BUILD_WEBPORT=8090
