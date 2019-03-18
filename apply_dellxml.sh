@@ -74,7 +74,7 @@ if [ -n "$RCFILE" ] && [ -f "$RCFILE" ]; then
 fi
 
 # CHECK A FEW REQUIRED VARIABLES - BUT NOT ALL
-CHECKLIST="SRV_NAME SRV_OOB_IP SRV_OOB_USR SRV_OOB_PWD BUILD_WEBIP BUILD_WEBPORT"
+CHECKLIST="SRV_NAME SRV_OOB_IP SRV_OOB_USR SRV_OOB_PWD"
 for VAR in $CHECKLIST; do
     if [ -z "${!VAR}" ] ; then
         echo "ERROR:  Invalid or missing variable [$VAR] = [${!VAR}] in rcfile [$RCFILE]"
@@ -91,6 +91,16 @@ if [ -z "$TEMPLATE" ] || ! [ -f "$REDFISH_ROOT/$TEMPLATE" ]; then
 else
     echo "Using template [$REDFISH_ROOT/$TEMPLATE]"
 fi
+
+# CHECK VARIABLES USED IN TEMPLATE
+CHECKLIST=$(grep -oP '(?<=@@)[^@]+(?=@@)' "$REDFISH_ROOT/$TEMPLATE" | sort | uniq | xargs)
+for VAR in $CHECKLIST; do
+    if [ -z "${!VAR}" ] ; then
+        echo "ERROR:  Invalid or missing variable [$VAR] = [${!VAR}] required by template [$TEMPLATE]"
+        echo "usage:  ./apply_dellxml.sh [--rc settingsfile] --template templatefile [--no-confirm] [--no-apply-hw] [--help]"
+        exit 1
+    fi
+done
 
 # SET ADDITIONAL VARIABLES BASED ON RC FILE
 SRV_IPXE_URL=http://$BUILD_WEBIP:$BUILD_WEBPORT/ipxe-$SRV_IPXE_INF-$SRV_VLAN.efi
