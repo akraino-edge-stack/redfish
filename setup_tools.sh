@@ -44,7 +44,7 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # SKIP IF TOOLS HAVE ALREADY BEEN SETUP
 if [ -n "$REDFISH_TOOLS_SETUP" ]; then
-    exit 0
+    return 0
 fi
 
 # LOAD BUILD DEFAULT VALUES IF BUILD VARIABLES ARE NOT LOADED
