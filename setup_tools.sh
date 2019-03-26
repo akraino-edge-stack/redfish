@@ -42,6 +42,11 @@ esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
+# SKIP IF TOOLS HAVE ALREADY BEEN SETUP
+if [ -n "$REDFISH_TOOLS_SETUP" ]; then
+    exit 0
+fi
+
 # LOAD BUILD DEFAULT VALUES IF BUILD VARIABLES ARE NOT LOADED
 if [ -z "$AKRAINO_ROOT" ]; then
     BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -65,7 +70,7 @@ mkdir -p $BUILD_ROOT
 
 ## CHECK THAT REQUIRED PACKAGES ARE INSTALLED
 echo "Checking for known required packages"
-PACKAGES="xorriso sshpass python-requests python-pip coreutils"
+PACKAGES="docker python xorriso sshpass python-requests python-pip python-yaml python-jinja2 make gcc coreutils"
 for PKG in $PACKAGES ; do
     if ! apt list $PKG 2>/dev/null | grep "$PKG.*installed.*" ; then
         echo "Attempting to install missing package $PKG"
@@ -123,4 +128,4 @@ if [ ! -f "$HPE_ROOT/examples/Redfish/_redfishobject.py" ]; then
 fi
 
 echo "Tools are ready in [$AKRAINO_ROOT]"
-
+export REDFISH_TOOLS_SETUP="True"

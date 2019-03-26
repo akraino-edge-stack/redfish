@@ -34,6 +34,7 @@ export HPE_ROOT=${HPE_ROOT:-$AKRAINO_ROOT/hpe}
 export REGION_ROOT=${REGION_ROOT:-$WEB_ROOT/region}
 export BUILD_ROOT=${BUILD_ROOT:-$AKRAINO_ROOT/server-config}
 export IPXE_ROOT=${IPXE_ROOT:-$AKRAINO_ROOT/ipxe}
+export YAML_ROOT=${YAML_ROOT:-$AKRAINO_ROOT/yaml_builds}
 
 export UBUNTU_URL=${UBUNTU_URL:-http://releases.ubuntu.com/16.04/ubuntu-16.04.6-server-amd64.iso}
 export BUILD_WEBPORT=8090

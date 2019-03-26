@@ -85,6 +85,13 @@ BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # LOAD SERVER VARIABLES IF SERVER RCFILE PROVIDED - OTHERWISE ASSUME THE VARIABLES HAVE BEEN EXPORTED
 if [ -n "$RCFILE" ] && [ -f "$RCFILE" ]; then
+    # IF RCFILE IS YAML FORMAL THEN CONVERT RCFILE TO PROPERTIES FILE
+    if [ "$(grep -vP '^#|^\s*$' $RCFILE | head -n 1)" = "---" ]; then
+        NEWRCFILE=$BUILD_ROOT/$(basename "$RCFILE" | cut -d. -f1)rc
+        echo "WARNING:  Converting yaml file [$RCFILE] to properties file [$NEWRCFILE]"
+        python $YAML_ROOT/scripts/jcopy.py $RCFILE $YAML_ROOT/tools/j2/serverrc.j2 $NEWRCFILE
+        export RCFILE=$NEWRCFILE
+    fi
     source $RCFILE
 fi
 
