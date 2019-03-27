@@ -14,11 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Add proxy settings if required for your environment
-#
-#export http_proxy=http://your.proxy.com:8080/
-#export https_proxy=http://your.proxy.com:8080/
-
 HOSTNAME=$(hostname -s)
 echo "### BEGINING FIRSTBOOT SCRIPT ###" "[`date`]"
 echo " "
@@ -27,8 +22,7 @@ echo " "
 
 echo "Updating available packages"
 apt-get update 
-apt-get install -y --install-recommends linux-generic-hwe-16.04 xserver-xorg-hwe-16.04
-apt-get install -y ipmitool
+apt-get install -y --install-recommends linux-generic-hwe-16.04 ipmitool
 
 # Adding 3 node cluster related changes
 swapoff  --all
@@ -48,11 +42,7 @@ fdisk -l /dev/sd? | grep "Ceph OSD"
 fdisk -l /dev/sd? | grep "Ceph OSD" | grep -oP "/dev/sd." | xargs -n 1 wipefs -a -f
 
 echo "Creating Ceph journal partition and filesystem"
-# create ceph journal partition and filesystem
-
 devices=@@SRV_CEPH_DEVICE@@
-#devices=sdh
-#size=320
 
 echo "creating partions for ceph journal:"
 echo $devices
@@ -122,13 +112,14 @@ fi
 if [ -n "@@SRV_CALICO_VLAN@@" ]; then
     echo "Configuring Calico Interface in the server"
     tee -a /etc/network/interfaces << END
-    #CALICO
-    auto $calico
-    iface $calico inet static
-        address @@SRV_CALICO_IP@@
-        netmask 255.255.255.0
-        vlan-raw-device @@SRV_BOND@@
-        mtu @@SRV_MTU@@
+
+#CALICO
+auto $calico
+iface $calico inet static
+    address @@SRV_CALICO_IP@@
+    netmask 255.255.255.0
+    vlan-raw-device @@SRV_BOND@@
+    mtu @@SRV_MTU@@
 END
     ifup $calico
     if [ $? -eq 0 ]; then
@@ -143,13 +134,14 @@ fi
 if [ -n "@@SRV_NEUTRON_VLAN@@" ]; then
     echo "Configuring Neutron Interface in the server"
     tee -a /etc/network/interfaces << END
-    #OVERLAY/NEUTRON
-    auto $neutron
-    iface $neutron inet static
-        address @@SRV_NEUTRON_IP@@
-        netmask 255.255.255.0
-        vlan-raw-device @@SRV_BOND@@
-        mtu @@SRV_MTU@@
+
+#OVERLAY/NEUTRON
+auto $neutron
+iface $neutron inet static
+    address @@SRV_NEUTRON_IP@@
+    netmask 255.255.255.0
+    vlan-raw-device @@SRV_BOND@@
+    mtu @@SRV_MTU@@
 END
     ifup $neutron
     if [ $? -eq 0 ]; then
@@ -163,12 +155,13 @@ fi
 if [ -n "@@SRV_PXE_INF@@" ]; then
     echo "Configuring PXE Interface in the server"
     tee -a /etc/network/interfaces << END
-    #OVERLAY/NEUTRON
-    auto @@SRV_PXE_INF@@
-        iface @@SRV_PXE_INF@@ inet static
-        address @@SRV_PXE_IP@@
-        netmask 255.255.255.0
-        mtu @@SRV_MTU@@
+
+#OVERLAY/NEUTRON
+auto @@SRV_PXE_INF@@
+iface @@SRV_PXE_INF@@ inet static
+address @@SRV_PXE_IP@@
+    netmask 255.255.255.0
+    mtu @@SRV_MTU@@
 END
     ifup @@SRV_PXE_INF@@
     if [ $? -eq 0 ]; then
