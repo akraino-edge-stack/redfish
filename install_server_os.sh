@@ -30,7 +30,7 @@ UBUNTU_ISO=${UBUNTU_ISO:-}  ## IF NOT SET, UBUNTU_URL WILL BE USED TO DOWNLOAD D
 # SETUP LOGGING
 LOGDIR="/var/log/akraino"
 mkdir -p $LOGDIR
-LOGFILE="$LOGDIR/${1}_$(date +"%FT%H-%M-%S%z")_$(basename $0|cut -d. -f1)"
+LOGFILE="$LOGDIR/$(basename $0|cut -d. -f1)_$(date +'%FT%H-%M-%S%z')"
 echo "logging to $LOGFILE"
 exec 1> >(tee -a $LOGFILE)
 exec 2>&1
