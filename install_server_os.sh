@@ -27,12 +27,13 @@
 # SET DEFAULT VALUES
 UBUNTU_ISO=${UBUNTU_ISO:-}  ## IF NOT SET, UBUNTU_URL WILL BE USED TO DOWNLOAD DEFAULT ISO
 
-# SETUP LOGGING FOR INTERACTIVE SHELLS (SAVE ORIGINAL STDIN AND STDOUT AS FD 3 AND 4)
-MYLOGFILE="`basename $0`"; MYLOGFILE="${MYLOGFILE%.*}-`date +%FT%H-%M-%S-%2N`.log"
-if [[ $- = *i* ]]; then
-    exec 3>&1 4>&2 1> >(tee -a "$MYLOGFILE") 2>&1
-    echo "Logging to $PWD/$MYLOGFILE"
-fi
+# SETUP LOGGING
+LOGDIR="/var/log/akraino"
+mkdir -p $LOGDIR
+LOGFILE="$LOGDIR/${1}_$(date +"%FT%H-%M-%S%z")_$(basename $0|cut -d. -f1)"
+echo "logging to $LOGFILE"
+exec 1> >(tee -a $LOGFILE)
+exec 2>&1
 
 echo "Beginning $0 as user [$USER] in pwd [$PWD] with home [$HOME]"
 
@@ -437,9 +438,9 @@ echo "SUCCESS:  Completed bare metal install of regional server [$SRV_NAME] at" 
 echo "SUCCESS:  Try connecting with 'ssh root@$SRV_IP' as user $USER"
 echo "Elapsed time was $(( ($ENDTIME - $STARTTIME) / 60 )) minutes and $(( ($ENDTIME - $STARTTIME) % 60 )) seconds"
 
-## RESTORE SAVED STDIN AND STDOUT (TERMINATES TEE REDIRECTION)
-if [[ $- = *i* ]]; then
-    exec 1>&3 2>&4
-fi
+## CLOSE REDIRECTED IO
+exec 2>&-
+exec 1>&-
+
 exit 0
 
