@@ -64,19 +64,19 @@ fi
 echo "Checking iso [$UBUNTU_ISO]"
 
 ## CHECK IF ISO EXISTS
-if [ -n "$UBUNTU_ISO" ] && [ ! -f $UBUNTU_ISO ]; then 
+if [ -n "$UBUNTU_ISO" ] && [ ! -f $UBUNTU_ISO ]; then
     echo "ERROR:  ISO file [$UBUNTU_ISO] does not exists"
     exit 1
 fi
 
 ## CHECK IF ISO IS VALID
 mkdir -p $WEB_ROOT
-if [ -z $UBUNTU_ISO ] || ! xorriso --indev $UBUNTU_ISO --check-media &>/dev/null; then 
+if [ -z $UBUNTU_ISO ] || ! xorriso --indev $UBUNTU_ISO --check-media &>/dev/null; then
     echo "WARNING:  ISO file [$UBUNTU_ISO] appears to be missing or corrupt.  Downloading instead."
     xorriso --indev $UBUNTU_ISO --check-media 2>&1 | sed -e "s/^/    /g"
     export UBUNTU_ISO=${UBUNTU_URL##*/}
     echo "WARNING:  Attempting to use [$UBUNTU_ISO] instead."
-    if ! [ -f $WEB_ROOT/$UBUNTU_ISO ]; then 
+    if ! [ -f $WEB_ROOT/$UBUNTU_ISO ]; then
         echo "Downloading Ubuntu iso from [$UBUNTU_URL] to [$UBUNTU_ISO]"
         curl -Lo $WEB_ROOT/$UBUNTU_ISO $UBUNTU_URL
     else
@@ -89,7 +89,7 @@ UBUNTU_ISO=$WEB_ROOT/${UBUNTU_ISO##*/}
 
 echo "Updating web root folder [$WEB_ROOT] with ubuntu iso [$UBUNTU_ISO] contents"
 ## CHECK AGAIN IF ISO EXISTS/IS ISO FORMAT
-if [ ! -f $UBUNTU_ISO ] || ! xorriso --indev $UBUNTU_ISO --check-media &>/dev/null; then 
+if [ ! -f $UBUNTU_ISO ] || ! xorriso --indev $UBUNTU_ISO --check-media &>/dev/null; then
     echo "ERROR:  ISO file [$UBUNTU_ISO] does not exists or is corrupt"
     xorriso --indev $UBUNTU_ISO --check-media | sed -e "s/^/    /g"
     exit 1
@@ -131,19 +131,7 @@ STD_INITRD=initrd-$ISO_VERSION-$ISO_ARCH
 cp -f $UBUNTU_FOLDER/install/netboot/ubuntu-installer/$ISO_ARCH/linux $WEB_ROOT/$STD_KERNEL
 gunzip -c $UBUNTU_FOLDER/install/netboot/ubuntu-installer/$ISO_ARCH/initrd.gz > $WEB_ROOT/$STD_INITRD
 
-## CREATE SCRIPT-ISO_VERSION-ISO_ARCH.IPXE FILE
-sed -e "s|@@KERNEL@@|$HWE_KERNEL|g" \
-    -e "s|@@INITRD@@|$HWE_INITRD|g" \
-    -e "s|@@BASE_KERNEL@@|$HWE_OIMAGE|g" \
-    -e "s|@@UBUNTU_ROOT@@|$UBUNTU_ROOT|g" \
-    $REDFISH_ROOT/script.ipxe.template > $WEB_ROOT/script-hwe-$ISO_VERSION-$ISO_ARCH.ipxe
-
-sed -e "s|@@KERNEL@@|$STD_KERNEL|g" \
-    -e "s|@@INITRD@@|$STD_INITRD|g" \
-    -e "s|@@BASE_KERNEL@@|$STD_OIMAGE|g" \
-    -e "s|@@UBUNTU_ROOT@@|$UBUNTU_ROOT|g" \
-    $REDFISH_ROOT/script.ipxe.template > $WEB_ROOT/script-$ISO_VERSION-$ISO_ARCH.ipxe
-
 echo "Files for Ubuntu version [$ISO_VERSION] [$ISO_ARCH] are ready in folder [$WEB_ROOT]"
-echo "Use script-hwe-$ISO_VERSION-$ISO_ARCH.ipxe or script-$ISO_VERSION-$ISO_ARCH.ipxe in the dhcp config depending on the kernel version required."
+echo "Use hwe-$ISO_VERSION-$ISO_ARCH or $ISO_VERSION-$ISO_ARCH depending on the kernel version required."
+
 

@@ -1,0 +1,70 @@
+#!ipxe
+#
+# Copyright 2019 AT&T Intellectual Property.  All other rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+echo Scanning network cards looking for a match
+set idx:int32 0
+:loop
+    isset ${net${idx}/mac} || goto failed
+    echo   checking net${idx} with chip ${net${idx}/chip} and MAC ${net${idx}/mac}
+    set nic net${idx}
+    goto host_${net${idx}/mac} ||
+    inc idx
+    goto loop
+
+# ERROR - loop finished without finding a match or boot failed
+:failed
+    echo
+    echo ERROR: Boot failed!!!  Nic mac addresses did not match any known host.
+    echo Type ifstat for a list of intefaces and mac addresses
+    shell
+
+:boot
+    echo Attempting boot using nic=${nic} vlan=${vlan} ip=${myip} mask=${mynm} gw=${mygw} mac=${${nic}/mac}
+    isset ${vlan} || goto skip_vlan
+        vcreate --tag ${vlan} ${nic} || goto :failed
+        set nic ${nic}-${vlan}
+:skip_vlan
+    isset ${myip} || goto dhcp
+        isset ${myip}  && set ${nic}/ip      ${myip}  || goto failed
+        isset ${mynm}  && set ${nic}/netmask ${mynm}  || goto failed
+        isset ${mygw}  && set ${nic}/gateway ${mygw}  || goto failed
+        isset ${mydns} && set ${nic}/dns     ${mydns} ||
+        ifopen ${nic} || goto failed
+        goto loadkernel
+:dhcp
+    ifconf --configurator dhcp ${nic} || goto failed
+
+:loadkernel
+    echo Preparing to start Ubuntu Xenial installer for host [${myname}] using settings:
+    echo initrd: ${myinitrd}
+    echo kernel: ${mykernel}
+    echo params: ${myparams}
+    prompt --key 0x02 --timeout 15000 Pausing 15 seconds... Press Ctrl-B for the iPXE command line... && shell ||
+
+    kernel ${mykernel} ${myparams} || goto failed
+    initrd ${myinitrd} || goto failed
+    boot || goto failed
+
+# END - SCRIPT NEVER REACHES THIS POINT
+
+# BEGIN HOST ENTRIES
+# each host section
+#     should start  a label with the format :host_macaddr
+#     should set the required variables to boot
+#     must end with goto boot
+
+

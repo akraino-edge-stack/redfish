@@ -62,15 +62,6 @@ if [ -n "$RCFILE" ] && [ -f "$RCFILE" ]; then
     source $RCFILE
 fi
 
-IPXE_VLAN=${IPXE_VLAN:-1}
-IPXE_INTF=${IPXE_INTF:-net1}
-
-## CHECK IF IPXE EFI FILE ALREADY EXISTS
-if [ -f "$WEB_ROOT/ipxe-$IPXE_INTF-$IPXE_VLAN.efi" ]; then
-    echo "Skipping ipxe build because efi file [$WEB_ROOT/ipxe-$IPXE_INTF-$IPXE_VLAN.efi] already exists"
-    exit 0
-fi
-
 ## GIT CLONE IPXE IF $IPXE_ROOT DOES NOT EXIST
 if [ ! -d "$IPXE_ROOT" ]; then
     echo "Cloning ipxe source from [$IPXE_GIT] to [$IPXE_ROOT]"
@@ -84,13 +75,41 @@ if [ ! -f "$IPXE_ROOT/src/config/general.h" ]; then
 fi
 sed -i 's|//#define VLAN_CMD|#define VLAN_CMD|g' $IPXE_ROOT/src/config/general.h
 
+## CHECK THAT SRV_MAC IS SET
+if [ -z "$SRV_MAC" ]; then
+    echo "ERROR:  Invalid or missing variable SRV_MAC [$SRV_MAC]"
+    exit 1
+fi
+
+#### CREATE HOST_MAC.IPXE ####
+SRV_OSVER=$(echo $SRV_BLD_SCRIPT | grep -Eo '(hwe-)?[0-9]+\.[0-9]+\.[0-9]+-[^.-]+')
+SRV_OSKRN_EXT=-$(echo $SRV_BLD_SCRIPT | grep -Eo 'hwe-[0-9]+\.[0-9]+')
+SRV_OSWEB_DIR=$(echo $SRV_BLD_SCRIPT | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+-[^.-]+')
+
+## COPY TEMPLATE (WITHOUT COMMENTS TO REDUCE SIZE) AND REPLACE VALUES
+HOST_IPXE_FILE=$AKRAINO_ROOT/server-config/host_${SRV_MAC//:/}.ipxe
+grep -v '^#.*$' $REDFISH_ROOT/boot.ipxe.template > $HOST_IPXE_FILE
+for VAR in $(set | grep -P "^SRV_|^BUILD_" | cut -f 1 -d'='); do
+    sed -i -e "s|@@$VAR@@|${!VAR}|g" $HOST_IPXE_FILE
+done
+
+if [ ! -f "$HOST_IPXE_FILE" ]; then
+    echo "ERROR:  failed creating script [$HOST_IPXE_FILE]"
+    exit 1
+fi
+
 ## CREATE BOOT.IPXE
-rm -f $IPXE_ROOT/boot.ipxe
-sed -e "s|@@IPXE_VLAN@@|$IPXE_VLAN|g" \
-    -e "s|@@IPXE_INTF@@|$IPXE_INTF|g" \
-    $REDFISH_ROOT/boot.ipxe.template > $IPXE_ROOT/boot.ipxe
+cat $REDFISH_ROOT/base.ipxe.template $AKRAINO_ROOT/server-config/host_*.ipxe > $IPXE_ROOT/boot.ipxe
 if [ ! -f "$IPXE_ROOT/boot.ipxe" ]; then
     echo "ERROR:  failed creating script [$IPXE_ROOT/boot.ipxe]"
+    exit 1
+fi
+
+## CHECK THAT ALL VALUES WERE REPLACED
+MISSING=$(grep -Po "@@.*?@@" $IPXE_ROOT/boot.ipxe | sort | uniq)
+if [ -n "$MISSING" ] ; then
+    echo "ERROR:  Required variable(s) for $IPXE_ROOT/boot.ipxe were not located in the resource file [$RCFILE]"
+    echo ${MISSING//@@/} | xargs -n 1 | sed -e 's/^/        /g'
     exit 1
 fi
 
@@ -104,7 +123,8 @@ if [ ! -f "$IPXE_ROOT/src/bin-x86_64-efi/ipxe.efi" ]; then
 fi
 
 ## COPY IPXE TO WEB ROOT
-cp -f $IPXE_ROOT/src/bin-x86_64-efi/ipxe.efi $WEB_ROOT/ipxe-$IPXE_INTF-$IPXE_VLAN.efi
+cp -f $IPXE_ROOT/src/bin-x86_64-efi/ipxe.efi $WEB_ROOT/ipxe.efi
 
-echo "Created ipxe file [$WEB_ROOT/ipxe-$IPXE_INTF-$IPXE_VLAN.efi] in web root [$WEB_ROOT]"
+echo "Created ipxe file [$WEB_ROOT/ipxe.efi] in web root [$WEB_ROOT]"
+
 

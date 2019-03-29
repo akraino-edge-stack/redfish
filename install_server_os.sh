@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2018-2019 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
 # limitations under the License.
 
 #
-# Script to install region server.
+# Script to install OS on baremetal server.
 #
-# usage:  ./install_regionserver.sh  [--rc settingsfile] [--no-confirm] [--no-apply-hw] [--help]
+# usage:  ./install_server_os.sh  [--rc settingsfile] [--no-confirm] [--no-apply-hw] [--help]
 
 # Define Variables
 #
@@ -113,9 +113,7 @@ if [ -z "$BUILD_WEBIP" ]; then
 fi
 
 # SET ADDITIONAL VARIABLES BASED ON RC FILE
-IPXE_VLAN=$SRV_VLAN
-IPXE_INTF=$SRV_IPXE_INF
-IPXE_URL=http://$BUILD_WEBIP:$BUILD_WEBPORT/ipxe-$SRV_IPXE_INF-$SRV_VLAN.efi
+IPXE_URL=http://$BUILD_WEBIP:$BUILD_WEBPORT/ipxe.efi
 SRV_FIRSTBOOT_TEMPLATE=${SRV_FIRSTBOOT_TEMPLATE:-firstboot.sh.template}
 
 if [ -z "$NO_CONFIRM" ]; then
@@ -175,6 +173,7 @@ case $SRV_OEM in
             echo "ERROR:  Unable to get Dell nic mac address from [$SRV_OOB_IP]"
             exit 1;
         fi
+        echo "Using SRV_MAC [$SRV_MAC] for nic [$SRV_HTTP_BOOT_DEV]"
     fi
     ;;
     HP|HPE)
@@ -197,8 +196,8 @@ if [ "$?" -ne 0 ]; then
 fi
 
 ## CREATE IPXE FILE
-echo "Creating ixpe.efi for web root in folder [$WEB_ROOT] using interface [$SRV_IPXE_INF] and vlan [$SRV_VLAN]"
-if ! (IPXE_VLAN=$SRV_VLAN IPXE_INTF=$SRV_IPXE_INF $REDFISH_ROOT/create_ipxe.sh); then
+echo "Creating ixpe.efi for web root in folder [$WEB_ROOT] using interface [$SRV_MAC] and vlan [$SRV_VLAN]"
+if ! . $REDFISH_ROOT/create_ipxe.sh; then
     echo "ERROR:  failed to add ipxe file to web root"
     exit 1
 fi
@@ -263,13 +262,11 @@ subnet $SRV_SUBNET netmask $SRV_NETMASK {
     option subnet-mask $SRV_NETMASK;
     option routers $SRV_GATEWAY;
     option domain-name-servers $SRV_DNSCSV;
-    option domain-name "$SRV_DOMAIN";
-    option ipxe-web-server "$BUILD_WEBIP:$BUILD_WEBPORT";
 }
 EOF
 
 if ! route -n | grep "$SRV_SUBNET" | grep " U " >/dev/null ; then
-    echo "Subner [$SRV_SUBNET] is not a local network, attempting to find local subnet for dhcp service"
+    echo "Subnet [$SRV_SUBNET] is not a local network, attempting to find local subnet for dhcp service"
     echo "The dhcp service requires at least one subnet in the configuration to be a local subnet"
     LOCAL_INF=$(ip route get $SRV_IP | grep "$SRV_IP" | awk '{print $3}')
     LOCAL_SUBNET=$(route -n | grep " U " | grep "$LOCAL_INF" | head -n 1 | awk '{print $1}')
@@ -288,12 +285,6 @@ EOF
     fi
 fi
 
-## CHECK THAT SRV_BLD_SCRIPT EXISTS
-if [ ! -f "$WEB_ROOT/$SRV_BLD_SCRIPT" ]; then
-    echo "ERROR: Missing SRV_BLD_SCRIPT [$SRV_BLD_SCRIPT] from web root [$WEB_ROOT]"
-    exit 1
-fi
-
 echo "Updating dhcp configuration [$DHCP_ROOT/dhcpd.conf] with server [$SRV_NAME]"
 ## DELETE ANY HOST ENTRY WITH THE SAME MAC ADDRESS OR NAME
 perl -i -p0e "s/^host.*?$SRV_MAC.*?\n\}\n//gms" $DHCP_ROOT/dhcpd.conf
@@ -303,12 +294,10 @@ host $SRV_NAME {
     hardware ethernet $SRV_MAC;
     fixed-address $SRV_IP;
     option host-name $SRV_NAME;
-    option ipxe-interface "$SRV_BLD_INF";
-    if substring (option vendor-class-identifier,0,9) = "PXEClient" {
-        filename "http://$BUILD_WEBIP:$BUILD_WEBPORT/$SRV_BLD_SCRIPT";
-    }
 }
 EOF
+## DELETE ANY HOST ENTRY MISSING HOSTNAME WHICH WILL PREVENT DHCPD FROM STARTING
+perl -i -p0e "s/^host \s*?{.*\n}\n//gms" $DHCP_ROOT/dhcpd.conf
 
 ## START/RESTART DHCP SERVICE
 echo "Starting dhcp server using folder [$DHCP_ROOT] on interface [$BUILD_INTERFACE]"
@@ -443,4 +432,5 @@ exec 2>&-
 exec 1>&-
 
 exit 0
+
 

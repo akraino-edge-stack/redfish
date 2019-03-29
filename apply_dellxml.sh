@@ -92,6 +92,10 @@ else
     echo "Using template [$REDFISH_ROOT/$TEMPLATE]"
 fi
 
+# SET ADDITIONAL VARIABLES BASED ON RC FILE
+SRV_IPXE_URL=http://$BUILD_WEBIP:$BUILD_WEBPORT/ipxe.efi
+XMLFILE=$SRV_NAME.${TEMPLATE%\.template}
+
 # CHECK VARIABLES USED IN TEMPLATE
 CHECKLIST=$(grep -oP '(?<=@@)[^@]+(?=@@)' "$REDFISH_ROOT/$TEMPLATE" | sort | uniq | xargs)
 for VAR in $CHECKLIST; do
@@ -102,15 +106,11 @@ for VAR in $CHECKLIST; do
     fi
 done
 
-# SET ADDITIONAL VARIABLES BASED ON RC FILE
-SRV_IPXE_URL=http://$BUILD_WEBIP:$BUILD_WEBPORT/ipxe-$SRV_IPXE_INF-$SRV_VLAN.efi
-XMLFILE=$SRV_NAME.${TEMPLATE%\.template}
-
 if [ -z "$NO_CONFIRM" ]; then
     echo ""
     read -r -p "Preparing to apply xml file [$TEMPLATE] to server [$SRV_NAME] using oob ip [$SRV_OOB_IP].  Are you sure? [y/N] " response
     case "$response" in
-        [yY][eE][sS]|[yY]) 
+        [yY][eE][sS]|[yY])
             ;;
         *)
             echo "Script aborted!"
@@ -161,7 +161,7 @@ if [ -z "$NO_APPLY_HW" ]; then
         exit 1
     fi
 else
-    ## SKIPPING REBOOT 
+    ## SKIPPING REBOOT
     echo "WARNING:  Skipping application of hardware settings - normally used for testing only"
 fi
 
@@ -169,4 +169,5 @@ fi
 ETIME=$(date +%s)
 echo "SUCCESS:  Completed update of BIOS/RAID settings on [$SRV_NAME] at" `date`
 echo "Elapsed time was $(( ($ETIME - $STIME) / 60 )) minutes and $(( ($ETIME - $STIME) % 60 )) seconds"
+
 

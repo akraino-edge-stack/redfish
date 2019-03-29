@@ -92,6 +92,10 @@ else
     echo "Using template [$REDFISH_ROOT/$TEMPLATE]"
 fi
 
+# SET ADDITIONAL VARIABLES BASED ON RC FILE
+SRV_IPXE_URL=http://$BUILD_WEBIP:$BUILD_WEBPORT/ipxe-$SRV_IPXE_INF-$SRV_VLAN.efi
+JSONFILE=$SRV_NAME.${TEMPLATE%\.template}
+
 # CHECK VARIABLES USED IN TEMPLATE
 CHECKLIST=$(grep -oP '(?<=@@)[^@]+(?=@@)' "$REDFISH_ROOT/$TEMPLATE" | sort | uniq | xargs)
 for VAR in $CHECKLIST; do
@@ -101,10 +105,6 @@ for VAR in $CHECKLIST; do
         exit 1
     fi
 done
-
-# SET ADDITIONAL VARIABLES BASED ON RC FILE
-SRV_IPXE_URL=http://$BUILD_WEBIP:$BUILD_WEBPORT/ipxe-$SRV_IPXE_INF-$SRV_VLAN.efi
-JSONFILE=$SRV_NAME.${TEMPLATE%\.template}
 
 if [ -z "$NO_CONFIRM" ]; then
     echo ""
@@ -168,4 +168,5 @@ fi
 ETIME=$(date +%s)
 echo "SUCCESS:  Completed update of BIOS/RAID settings on [$SRV_NAME] at" `date`
 echo "Elapsed time was $(( ($ETIME - $STIME) / 60 )) minutes and $(( ($ETIME - $STIME) % 60 )) seconds"
+
 
