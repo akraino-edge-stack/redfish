@@ -1,6 +1,6 @@
 #!ipxe
 #
-# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2019 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +14,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-set vlan @@IPXE_VLAN@@
-set nic @@IPXE_INTF@@
-echo Starting network on vlan [${vlan}] using nic [${nic}]...
-vcreate --tag ${vlan} ${nic} ||
-ifconf --configurator dhcp ${nic}-${vlan} || ifstat
-isset ${filename} && chain ${filename} || echo Boot file [${filename}] does not exist or is invalid...
-prompt --key 0x02 --timeout 0 Press Ctrl-B for the iPXE command line... && shell || 
+
+:host_@@SRV_MAC@@
+    set myname @@SRV_NAME@@
+    set vlan @@SRV_VLAN@@
+    set myip @@SRV_IP@@
+    set mynm @@SRV_NETMASK@@
+    set mygw @@SRV_GATEWAY@@
+    set myinterface interface=@@SRV_BLD_INF@@
+    set mystaticnet netcfg/disable_autoconfig=true netcfg/vlan_id=@@SRV_VLAN@@ netcfg/get_ipaddress=@@SRV_IP@@ netcfg/get_netmask=@@SRV_NETMASK@@ netcfg/get_gateway=@@SRV_GATEWAY@@ netcfg/get_nameservers=@@SRV_DNS@@ netcfg/get_domain=@@SRV_DOMAIN@@ netcfg/confirm_static=true
+    set ramdisk root=/dev/ram0 load_ramdisk=1 ramdisk_size=524288
+    set iname initrd-@@SRV_OSVER@@
+    set uroot ubuntu-@@SRV_OSWEB_DIR@@
+    set myweb http://@@BUILD_WEBIP@@:@@BUILD_WEBPORT@@/
+    set mymirror mirror/http/directory=/${uroot} mirror/http/hostname=${myweb}
+    set liveinstaller live-installer/net-image=${myweb}/${uroot}/install/filesystem.squashfs
+    set baseinstaller base-installer/kernel/override-image=linux-generic@@SRV_OSKRN_EXT@@
+
+    set mykernel ${myweb}/linux-@@SRV_OSVER@@
+    set myparams ${ramdisk} showopts auto=true locale=en_US initrd=${iname} hostname=${myname} url=${myweb}/${myname}.seed ${myinterface} ${mystaticnet} ${baseinstaller} ${liveinstaller} ${mymirror}
+    set myinitrd ${myweb}/${iname}
+    goto boot
+
 

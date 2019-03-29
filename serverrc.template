@@ -28,24 +28,15 @@ SRV_OOB_IP=192.168.41.254
 SRV_OOB_USR=root
 SRV_OOB_PWD=calvin
 
-# mac address of server to be used during the build - not required for Dell servers
-# SRV_MAC=3c:fd:fe:b8:10:60
-
-# name of network interface used during build when ipxe.efi is booted and when os is booted
-# ipxe numbers ports from 0-n in pci bus order. 
-# the netx value will depend on how many nics are in the server 
-# and which pci device number is assigned to the slot
-SRV_IPXE_INF=net4
-
 # the build interface is the nic used by the Ubuntu installed to load the OS
 SRV_BLD_INF=enp94s0f0
 
 # the boot device is the device name on which the OS will be loaded
 SRV_BOOT_DEVICE=sda
 
-# ipxe script to use - based on the os version and kernel to install
-# valid options are script-hwe-16.04.6-amd64.ipxe or script-16.04.6-amd64.ipxe
-SRV_BLD_SCRIPT=script-hwe-16.04.6-amd64.ipxe
+# Ubuntu kernel and version to use for os install
+# valid options are hwe-16.04.6-amd64 or 16.04.6-amd64
+SRV_BLD_SCRIPT=hwe-16.04.6-amd64
 
 # template xml file to set bios and raid configuration settings
 SRV_BIOS_TEMPLATE=dell_r740_g14_uefi_base.xml.template
