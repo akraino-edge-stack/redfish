@@ -165,7 +165,7 @@ if ! ping -c 3 $SRV_OOB_IP | grep time= ; then
 fi
 
 ## COLLECT ANY ADDITIONAL SERVER DATA NEEDED - FOR EXAMPLE, LOOKUP MAC FOR DELL NIC
-SRV_OEM=$(curl --insecure https://$SRV_OOB_IP/redfish/v1/ | grep -Poe '(?<="Oem":{")[^"]*(?=")')
+SRV_OEM=$(curl --noproxy '*' --insecure https://$SRV_OOB_IP/redfish/v1/ | grep -Poe '(?<="Oem":{")[^"]*(?=")')
 echo "Identified server as OEM [$SRV_OEM] using oob [$SRV_OOB_IP]"
 case $SRV_OEM in
     Dell)
@@ -242,7 +242,7 @@ echo "Starting web server using folder [$WEB_ROOT] on port [$BUILD_WEBPORT]"
 docker stop akraino-httpboot &> /dev/null
 docker rm akraino-httpboot &> /dev/null
 docker run -dit --name akraino-httpboot -p $BUILD_WEBPORT:80 -v "$WEB_ROOT":/usr/local/apache2/htdocs/ httpd:alpine >/dev/null && sleep 5
-if ! docker ps | grep akraino-httpboot >/dev/null || ! curl http://localhost:$BUILD_WEBPORT/ &>/dev/null ; then
+if ! docker ps | grep akraino-httpboot >/dev/null || ! curl --noproxy '*' http://localhost:$BUILD_WEBPORT/ &>/dev/null ; then
     echo "ERROR: Failed to start web server using folder [$WEB_ROOT] and port [$BUILD_WEBPORT]"
     ls -l $WEB_ROOT
     docker run -it --name akraino-httpboot -p $BUILD_WEBPORT:80 -v "$WEB_ROOT":/usr/local/apache2/htdocs/ httpd:alpine 2>&1

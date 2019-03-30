@@ -165,8 +165,8 @@ d-i preseed/late_command string \
     in-target /bin/bash -c 'echo -n -e "    bond-miimon 100\n    bond-slaves @@SRV_SLAVE1@@ @@SRV_SLAVE2@@\n    mtu @@SRV_MTU@@\n\n" >> /etc/network/interfaces'; \
     in-target /bin/bash -c 'echo -n -e "auto @@SRV_BOND@@.@@SRV_VLAN@@\niface @@SRV_BOND@@.@@SRV_VLAN@@ inet static\n    address @@SRV_IP@@\n    netmask @@SRV_NETMASK@@\n" >> /etc/network/interfaces'; \
     in-target /bin/bash -c 'echo -n -e "    gateway @@SRV_GATEWAY@@\n    dns-nameservers @@SRV_DNS@@\n    dns-search @@SRV_DNSSEARCH@@\n    vlan-raw-device @@SRV_BOND@@\n    mtu @@SRV_MTU@@\n" >> /etc/network/interfaces'; \
-    in-target /bin/bash -c 'curl http://@@BUILD_WEBIP@@:@@BUILD_WEBPORT@@/sources.list > /etc/apt/sources.list'; \
-    in-target /bin/bash -c 'curl http://@@BUILD_WEBIP@@:@@BUILD_WEBPORT@@/@@SRV_NAME@@.firstboot.sh > /root/@@SRV_NAME@@.firstboot.sh; chmod +x /root/@@SRV_NAME@@.firstboot.sh';
+    in-target /bin/bash -c 'curl --noproxy "*" http://@@BUILD_WEBIP@@:@@BUILD_WEBPORT@@/sources.list > /etc/apt/sources.list'; \
+    in-target /bin/bash -c 'curl --noproxy "*" http://@@BUILD_WEBIP@@:@@BUILD_WEBPORT@@/@@SRV_NAME@@.firstboot.sh > /root/@@SRV_NAME@@.firstboot.sh; chmod +x /root/@@SRV_NAME@@.firstboot.sh';
 
 ### Finish
 # Reboot after the install is finished.
