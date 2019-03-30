@@ -165,8 +165,10 @@ if ! ping -c 3 $SRV_OOB_IP | grep time= ; then
 fi
 
 ## COLLECT ANY ADDITIONAL SERVER DATA NEEDED - FOR EXAMPLE, LOOKUP MAC FOR DELL NIC
+SRV_OEM=$(curl --insecure https://$SRV_OOB_IP/redfish/v1/ | grep -Poe '(?<="Oem":{")[^"]*(?=")')
+echo "Identified server as OEM [$SRV_OEM] using oob [$SRV_OOB_IP]"
 case $SRV_OEM in
-    Dell|DELL)
+    Dell)
     if [ -z "$SRV_MAC" ]; then
         SRV_MAC=$(. $REDFISH_ROOT/get_dellnicmac.sh --nic $SRV_HTTP_BOOT_DEV)
         if [ "$?" -ne 0 ]; then
@@ -176,7 +178,7 @@ case $SRV_OEM in
         echo "Using SRV_MAC [$SRV_MAC] for nic [$SRV_HTTP_BOOT_DEV]"
     fi
     ;;
-    HP|HPE)
+    Hpe)
     if [ -z "$SRV_MAC" ]; then
         echo "ERROR:  HPE required variable SRV_MAC missing from rc file [$RCFILE]"
         exit 1;
@@ -314,7 +316,7 @@ fi
 
 ## CREATE CONFIG FILES AND APPLY UNLESS CALLED WITH --no-apply-hw
 case $SRV_OEM in
-    Dell|DELL)
+    Dell)
         if [ -n "$SRV_BIOS_TEMPLATE" ]; then
             . $REDFISH_ROOT/apply_dellxml.sh --template $SRV_BIOS_TEMPLATE
             echo "Completed update with status [$?]"
@@ -327,7 +329,7 @@ case $SRV_OEM in
             sleep 20
         fi
     ;;
-    HP|HPE)
+    Hpe)
         if [ -n "$SRV_BIOS_TEMPLATE" ]; then
             . $REDFISH_ROOT/apply_hpejson.sh --template $SRV_BIOS_TEMPLATE
             echo "Completed update with status [$?]"

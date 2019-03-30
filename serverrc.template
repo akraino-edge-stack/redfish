@@ -20,9 +20,6 @@
 # host name for server
 SRV_NAME=aknode44
 
-# server oem - Dell or HPE (case sensitive)
-SRV_OEM=Dell
-
 # out of band interface information for server (idrac/ilo/etc)
 SRV_OOB_IP=192.168.41.254
 SRV_OOB_USR=root
@@ -30,9 +27,6 @@ SRV_OOB_PWD=calvin
 
 # mac address of server to be used during the build - not required for Dell 10G servers
 # SRV_MAC=3c:fd:fe:b8:10:60
-
-# the build interface is the nic used by the Ubuntu installed to load the OS
-SRV_BLD_INF=enp94s0f0
 
 # the boot device is the device name on which the OS will be loaded
 SRV_BOOT_DEVICE=sda
@@ -46,7 +40,7 @@ SRV_BIOS_TEMPLATE=dell_r740_g14_uefi_base.xml.template
 SRV_BOOT_TEMPLATE=dell_r740_g14_uefi_httpboot.xml.template
 SRV_HTTP_BOOT_DEV=NIC.Slot.3-1-1
 
-# tempalte to run to configure OS after first boot
+# template to run to configure OS after first boot
 # current options are: firstboot.sh.template, firstboot-genesis.sh.tempate or firstboot-airship-iab.sh.template
 SRV_FIRSTBOOT_TEMPLATE=firstboot.sh.template
 
@@ -64,11 +58,11 @@ SRV_DOMAIN=lab.akraino.org
 SRV_DNSSEARCH=lab.akraino.org
 SRV_NTP=ntp.ubuntu.org
 
-# root password for server being built
-SRV_PWD=akraino,d
-
-# network bond information
+# network bond information - NOTE: SRV_SLAVE1 will be used for OS install
 SRV_BOND=bond0
 SRV_SLAVE1=enp94s0f0
 SRV_SLAVE2=enp94s0f1
+
+# password to set for root after OS is installed
+SRV_PWD=akraino,d
 
