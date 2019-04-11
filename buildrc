@@ -23,7 +23,7 @@ export REDFISH_REPO=${REDFISH_REPO:-https://nexus.akraino.org/service/local/arti
 export IPXE_GIT=${IPXE_GIT:-http://git.ipxe.org/ipxe.git}
 export DELL_GIT=${DELL_GIT:-https://github.com/dell/iDRAC-Redfish-Scripting.git}
 export DELL_GIT_COMMIT=${DELL_GIT_COMMIT:-64f184c8c37ed1f64831c5695cd69092105e5eec}
-export HPE_GIT=${HPE_GIT:-https://github.com/HewlettPackard/python-ilorest-library.git}
+export HPE_GIT=${HPE_GIT:-https://github.com/HewlettPackard/python-ilorest-library.git -b v2.3.1}
 
 export AKRAINO_ROOT=${AKRAINO_ROOT:-/opt/akraino}
 export WEB_ROOT=${WEB_ROOT:-$AKRAINO_ROOT/www}
