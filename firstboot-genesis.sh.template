@@ -171,5 +171,27 @@ END
     fi
 fi
 
+
+# Creating VXLAN interface
+
+if [ -n "@@SRV_VXLAN_INF@@" ]; then
+    echo "Configuring VXLAN Interface in the server"
+    tee -a /etc/network/interfaces << END
+
+# VXLAN
+auto @@SRV_VXLAN_INF@@
+iface @@SRV_VXLAN_INF@@ inet static
+address @@SRV_VXLAN_IP@@
+    netmask 255.255.255.0
+    mtu @@SRV_MTU@@
+END
+    ifup @@SRV_VXLAN_INF@@
+    if [ $? -eq 0 ]; then
+        echo " VXLAN interface Created"
+    else
+        echo " Failed to create VXLAN Interface"
+    fi
+fi
+
 exit
 

@@ -166,7 +166,11 @@ d-i preseed/late_command string \
     in-target /bin/bash -c 'echo -n -e "auto @@SRV_BOND@@.@@SRV_VLAN@@\niface @@SRV_BOND@@.@@SRV_VLAN@@ inet static\n    address @@SRV_IP@@\n    netmask @@SRV_NETMASK@@\n" >> /etc/network/interfaces'; \
     in-target /bin/bash -c 'echo -n -e "    gateway @@SRV_GATEWAY@@\n    dns-nameservers @@SRV_DNS@@\n    dns-search @@SRV_DNSSEARCH@@\n    vlan-raw-device @@SRV_BOND@@\n    mtu @@SRV_MTU@@\n" >> /etc/network/interfaces'; \
     in-target /bin/bash -c 'curl --noproxy "*" http://@@BUILD_WEBIP@@:@@BUILD_WEBPORT@@/sources.list > /etc/apt/sources.list'; \
-    in-target /bin/bash -c 'curl --noproxy "*" http://@@BUILD_WEBIP@@:@@BUILD_WEBPORT@@/@@SRV_NAME@@.firstboot.sh > /root/@@SRV_NAME@@.firstboot.sh; chmod +x /root/@@SRV_NAME@@.firstboot.sh';
+    in-target /bin/bash -c 'curl --noproxy "*" http://@@BUILD_WEBIP@@:@@BUILD_WEBPORT@@/@@SRV_NAME@@.firstboot.sh > /root/@@SRV_NAME@@.firstboot.sh; chmod +x /root/@@SRV_NAME@@.firstboot.sh'; \
+    in-target /bin/bash -c 'sed -i "s/GRUB_CMDLINE_LINUX=\"/GRUB_CMDLINE_LINUX=\"iommu=pt intel_iommu=on hugepagesz=1G hugepages=2/g" /etc/default/grub'; \
+    in-target /bin/bash -c 'update-grub'; \
+    in-target /bin/bash -c 'mkdir -p /dev/hugepages_1G'; \
+    in-target /bin/bash -c 'echo "none   /dev/hugepages_1G  hugetlbfs pagesize=1G       0      0" >> /etc/fstab';
 
 ### Finish
 # Reboot after the install is finished.
