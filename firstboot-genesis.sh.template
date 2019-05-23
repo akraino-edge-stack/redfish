@@ -26,7 +26,7 @@ apt-get install -y --install-recommends linux-generic-hwe-16.04 ipmitool
 
 echo "Checking for hugepages"
 if grep hugepages /proc/cmdline ; then
-    HUGEPAGESZ=$(grep -o 'hugepagesz=[^ ]*' /proc/cmdline | cut -f2 -d'=')
+    HUGEPAGESZ=$(grep -oPe '^hugepagesz=[^ ]*| hugepagesz=[^ ]*' /proc/cmdline | cut -f2 -d'=')
     echo "  Adding directory and mount for hugepages with size=$HUGEPAGESZ"
     if [ -z "HUGEPAGESZ" ]; then
         mkdir -p /dev/hugepages_$HUGEPAGESZ
