@@ -29,11 +29,11 @@ if grep hugepages /proc/cmdline ; then
     HUGEPAGESZ=$(grep -oPe '^hugepagesz=[^ ]*| hugepagesz=[^ ]*' /proc/cmdline | cut -f2 -d'=')
     echo "  Adding directory and mount for hugepages with size=$HUGEPAGESZ"
     if [ -z "HUGEPAGESZ" ]; then
-        mkdir -p /dev/hugepages_$HUGEPAGESZ
-        echo "none   /dev/hugepages_$HUGEPAGESZ  hugetlbfs pagesize=$HUGEPAGESZ       0      0" >> /etc/fstab
-    else
         mkdir -p /dev/hugepages
         echo "none   /dev/hugepages  hugetlbfs       0      0" >> /etc/fstab
+    else
+        mkdir -p /dev/hugepages_$HUGEPAGESZ
+        echo "none   /dev/hugepages_$HUGEPAGESZ  hugetlbfs pagesize=$HUGEPAGESZ       0      0" >> /etc/fstab
     fi
     mount -a
 fi
