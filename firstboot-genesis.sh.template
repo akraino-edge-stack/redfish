@@ -24,6 +24,20 @@ echo "Updating available packages"
 apt-get update 
 apt-get install -y --install-recommends linux-generic-hwe-16.04 ipmitool
 
+echo "Checking for hugepages"
+if grep hugepages /proc/cmdline ; then
+    HUGEPAGESZ=$(grep -o 'hugepagesz=[^ ]*' /proc/cmdline | cut -f2 -d'=')
+    echo "  Adding directory and mount for hugepages with size=$HUGEPAGESZ"
+    if [ -z "HUGEPAGESZ" ]; then
+        mkdir -p /dev/hugepages_$HUGEPAGESZ
+        echo "none   /dev/hugepages_$HUGEPAGESZ  hugetlbfs pagesize=$HUGEPAGESZ       0      0" >> /etc/fstab
+    else
+        mkdir -p /dev/hugepages
+        echo "none   /dev/hugepages  hugetlbfs       0      0" >> /etc/fstab
+    fi
+    mount -a
+fi
+
 # Adding 3 node cluster related changes
 swapoff  --all
 ln -s /etc/apparmor.d/usr.sbin.ntpd /etc/apparmor.d/disable/
@@ -168,6 +182,27 @@ END
         echo " PXE interface Created"
     else
         echo " Failed to create PXE Interface"
+    fi
+fi
+
+# Creating VXLAN interface
+
+if [ -n "@@SRV_VXLAN_INF@@" ]; then
+    echo "Configuring VXLAN Interface in the server"
+    tee -a /etc/network/interfaces << END
+
+# VXLAN
+auto @@SRV_VXLAN_INF@@
+iface @@SRV_VXLAN_INF@@ inet static
+address @@SRV_VXLAN_IP@@
+    netmask 255.255.255.0
+    mtu @@SRV_MTU@@
+END
+    ifup @@SRV_VXLAN_INF@@
+    if [ $? -eq 0 ]; then
+        echo " VXLAN interface Created"
+    else
+        echo " Failed to create VXLAN Interface"
     fi
 fi
 
