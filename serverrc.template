@@ -43,6 +43,7 @@ SRV_HTTP_BOOT_DEV=NIC.Slot.3-1-1
 # template to run to configure OS after first boot
 # current options are: firstboot.sh.template, firstboot-genesis.sh.tempate or firstboot-airship-iab.sh.template
 SRV_FIRSTBOOT_TEMPLATE=firstboot.sh.template
+SRV_KERNEL_PARAMS=
 
 # VLAN to use during build and for final network configuration
 SRV_VLAN=41
