@@ -100,7 +100,7 @@ fi
 echo "#######################################"
 echo "# USING INPUT FILE [$RCFILE]"
 echo "#######################################"
-cat $RCFILE
+sed -E 's/(^.*PWD=).*/\1###PASSWORD REMOVED####/g' $RCFILE
 echo "#######################################"
 
 # CHECK A FEW REQUIRED VARIABLES - BUT NOT ALL
