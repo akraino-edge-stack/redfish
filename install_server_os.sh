@@ -96,6 +96,13 @@ if [ -n "$RCFILE" ] && [ -f "$RCFILE" ]; then
     source $RCFILE
 fi
 
+# ECHO INPUT FILE TO LOGS FOR TROUBLESHOOTING
+echo "#######################################"
+echo "# USING INPUT FILE [$RCFILE]"
+echo "#######################################"
+cat $RCFILE
+echo "#######################################"
+
 # CHECK A FEW REQUIRED VARIABLES - BUT NOT ALL
 CHECKLIST="SRV_NAME SRV_OOB_IP SRV_SUBNET SRV_OOB_USR SRV_OOB_PWD BUILD_WEBPORT"
 for VAR in $CHECKLIST; do
