@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Add proxy settings if required for your environment
-# export http_proxy=http://your.proxy.com:8080/
-# export https_proxy=http://your.proxy.com:8080/
-#
-
 # host name for server
 SRV_NAME=aknode44
 
