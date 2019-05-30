@@ -38,6 +38,7 @@
                 "Attributes":{
                     "BootMode":"Uefi",
                     "UefiOptimizedBoot":"Enabled",
+                    "InternalSDCardSlot": "Disabled",
                     "Sriov":"Enabled",
                     "ProcVirtualization":"Enabled",
                     "IntelProcVtd":"Enabled",
