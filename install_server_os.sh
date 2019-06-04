@@ -155,13 +155,13 @@ if [ $? -ne 0 ] || [ -z "$VERSION" ]; then
 fi
 
 ## CHECK IF BUILD_WEBIP IS ON THIS SERVER
-if ! ifconfig | grep -B1 ":$BUILD_WEBIP " >/dev/null; then
+if ! ip addr | grep -B2 "inet $BUILD_WEBIP" >/dev/null; then
     echo "ERROR:  Build Web ip address [$BUILD_WEBIP] not found on this server"
-    ifconfig | grep --no-group-separator -B1 "inet addr:"
+    ip addr | grep --no-group-separator -B2 "inet "
     exit 1
 else
     echo "Found build web ip address [$BUILD_WEBIP] on this server!"
-    ifconfig | grep --no-group-separator -B1 ":$BUILD_WEBIP "
+    ip addr | grep --no-group-separator -B2 "inet $BUILD_WEBIP"
 fi
 
 ## CHECK THAT SERVER OOB INTERFACE IS REACHABLE
