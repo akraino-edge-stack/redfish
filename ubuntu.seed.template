@@ -93,7 +93,7 @@ d-i partman-efi/non_efi_system boolean true
 # The default is to mount by UUID, but you can also choose "traditional" to
 # use traditional device names, or "label" to try filesystem labels before
 # falling back to UUIDs.
-d-i partman/mount_style select traditional
+d-i partman/mount_style select uuid
 
 ### Packages
 
