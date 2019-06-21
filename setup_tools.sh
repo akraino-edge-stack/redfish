@@ -70,7 +70,7 @@ mkdir -p $BUILD_ROOT
 
 ## CHECK THAT REQUIRED PACKAGES ARE INSTALLED
 echo "Checking for known required packages"
-PACKAGES="python xorriso sshpass python-requests python-pip python-yaml python-jinja2 make gcc coreutils"
+PACKAGES="python xorriso sshpass python-requests python-pip python-yaml python-jinja2 make gcc git isolinux coreutils"
 for PKG in $PACKAGES ; do
     if ! apt list $PKG 2>/dev/null | grep "$PKG.*installed.*" ; then
         echo "Attempting to install missing package $PKG"
