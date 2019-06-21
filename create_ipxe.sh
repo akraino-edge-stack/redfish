@@ -81,13 +81,19 @@ if [ -z "$SRV_MAC" ]; then
     exit 1
 fi
 
+#### DELETE ANY EXISTING CONFIG FOR SAME HOSTNAME OR MAC ####
+echo "Removing old configuration files:"
+ls -A1 {$AKRAINO_ROOT/server-config/*_${SRV_MAC//:/}.ipxe,$AKRAINO_ROOT/server-config/${SRV_NAME}_*.ipxe} | uniq
+rm -f $AKRAINO_ROOT/server-config/*_${SRV_MAC//:/}.ipxe
+rm -f $AKRAINO_ROOT/server-config/${SRV_NAME}_*.ipxe
+
 #### CREATE HOST_MAC.IPXE ####
 SRV_OSVER=$(echo $SRV_BLD_SCRIPT | grep -Eo '(hwe-)?[0-9]+\.[0-9]+\.[0-9]+-[^.-]+')
 SRV_OSKRN_EXT=-$(echo $SRV_BLD_SCRIPT | grep -Eo 'hwe-[0-9]+\.[0-9]+')
 SRV_OSWEB_DIR=$(echo $SRV_BLD_SCRIPT | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+-[^.-]+')
 
 ## COPY TEMPLATE (WITHOUT COMMENTS TO REDUCE SIZE) AND REPLACE VALUES
-HOST_IPXE_FILE=$AKRAINO_ROOT/server-config/host_${SRV_MAC//:/}.ipxe
+HOST_IPXE_FILE=$AKRAINO_ROOT/server-config/${SRV_NAME}_${SRV_MAC//:/}.ipxe
 grep -v '^#.*$' $REDFISH_ROOT/boot.ipxe.template > $HOST_IPXE_FILE
 for VAR in $(set | grep -P "^SRV_|^BUILD_" | cut -f 1 -d'='); do
     sed -i -e "s|@@$VAR@@|${!VAR}|g" $HOST_IPXE_FILE
@@ -99,7 +105,9 @@ if [ ! -f "$HOST_IPXE_FILE" ]; then
 fi
 
 ## CREATE BOOT.IPXE
-cat $REDFISH_ROOT/base.ipxe.template $AKRAINO_ROOT/server-config/host_*.ipxe > $IPXE_ROOT/boot.ipxe
+echo "Adding the following configuration files to boot.ipxe script:"
+ls -A1 $AKRAINO_ROOT/server-config/*_????????????.ipxe
+cat $REDFISH_ROOT/base.ipxe.template $AKRAINO_ROOT/server-config/*_????????????.ipxe > $IPXE_ROOT/boot.ipxe
 if [ ! -f "$IPXE_ROOT/boot.ipxe" ]; then
     echo "ERROR:  failed creating script [$IPXE_ROOT/boot.ipxe]"
     exit 1
@@ -126,5 +134,4 @@ fi
 cp -f $IPXE_ROOT/src/bin-x86_64-efi/ipxe.efi $WEB_ROOT/ipxe.efi
 
 echo "Created ipxe file [$WEB_ROOT/ipxe.efi] in web root [$WEB_ROOT]"
-
 
