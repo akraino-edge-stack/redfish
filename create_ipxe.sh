@@ -132,6 +132,36 @@ fi
 
 ## COPY IPXE TO WEB ROOT
 cp -f $IPXE_ROOT/src/bin-x86_64-efi/ipxe.efi $WEB_ROOT/ipxe.efi
+echo "Created ipxe iso file [$WEB_ROOT/ipxe.efi] in web root [$WEB_ROOT]"
 
-echo "Created ipxe file [$WEB_ROOT/ipxe.efi] in web root [$WEB_ROOT]"
+## CREATE IPXE BOOTABLE IMG
+IPXE_IMG=$IPXE_ROOT/ipxe.img
+IPXE_IMG_MNT=$IPXE_ROOT/image
+dd if=/dev/zero of=$IPXE_IMG bs=1M count=10
+parted -s $IPXE_IMG mklabel msdos
+parted -s $IPXE_IMG -a optimal mkpart primary fat32 1 100%
+mkfs.vfat $IPXE_IMG
+mkdir -p $IPXE_IMG_MNT
+mount $IPXE_IMG $IPXE_IMG_MNT
+mkdir -p $IPXE_IMG_MNT/EFI/BOOT
+cp -f $IPXE_ROOT/src/bin-x86_64-efi/ipxe.efi $IPXE_IMG_MNT/EFI/BOOT/BOOTX64.EFI
+umount $IPXE_IMG_MNT
+
+## COPY IPXE IMG TO WEB ROOT
+cp -f $IPXE_IMG $WEB_ROOT/ipxe.img
+echo "Created ipxe img file [$WEB_ROOT/ipxe.img] in web root [$WEB_ROOT]"
+
+## CREATE IPXE BOOTABLE ISO
+IPXE_ISO_DIR=$IPXE_ROOT/ipxe_iso
+IPXE_ISO=$IPXE_ROOT/ipxe.iso
+mkdir -p $IPXE_ISO_DIR/EFI/BOOT
+cp -f $IPXE_ROOT/src/bin-x86_64-efi/ipxe.efi $IPXE_ISO_DIR/EFI/BOOT/BOOTX64.EFI
+mkdir -p $IPXE_ISO_DIR/isolinux
+cp /usr/lib/ISOLINUX/isolinux.bin $IPXE_ISO_DIR/isolinux/
+cp -f $IPXE_IMG $IPXE_ISO_DIR/isolinux/efiboot.img
+xorriso -as mkisofs -r -V 'IPXE 64-bit' -o "$IPXE_ISO" -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin -partition_offset 16 -J -l -joliet-long -c isolinux/boot.cat -b isolinux/isolinux.bin -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e isolinux/efiboot.img -no-emul-boot -isohybrid-gpt-basdat "$IPXE_ISO_DIR"
+
+## COPY IPXE ISO TO WEB ROOT
+cp -f $IPXE_ISO $WEB_ROOT/ipxe.iso
+echo "Created ipxe iso file [$WEB_ROOT/ipxe.iso] in web root [$WEB_ROOT]"
 
