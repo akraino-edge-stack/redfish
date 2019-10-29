@@ -58,40 +58,16 @@ fdisk -l /dev/sd? | grep "Ceph OSD" | grep -oP "/dev/sd." | xargs -n 1 wipefs -a
 echo "Creating Ceph journal partition and filesystem"
 devices=@@SRV_CEPH_DEVICE@@
 
-echo "creating partions for ceph journal:"
+echo "Creating block device for ceph journal:"
 echo $devices
 
 for d in $devices
 do
-   parted -s /dev/${d} mklabel msdos
-   parted -s -a optimal /dev/${d} -- mkpart primary ext4 1 -1s
+   wipefs -a -f /dev/${d}
+   parted -s /dev/${d} mklabel GPT
 done
 partprobe
 sleep 5 #let udev settle down
-
-devnum=1
-for d in $devices
-do
-   mountpoint=/var/lib/ceph/journal
-   mkfs.ext4 -F  /dev/${d}${devnum}
-   UUID=$(blkid -o export /dev/${d}${devnum} | sed -ne /^UUID/s/UUID=//p)
-   mkdir -p ${mountpoint}
-   echo "UUID=$UUID ${mountpoint} ext4 defaults,nofail 0 0" >>/etc/fstab
-   devnum=$((devnum+1))
-done
-
-/bin/mount -a
-devnum=1
-for d in $devices
-do
-  df -lh /dev/${d}${devnum}
-  if [ $? -eq 0 ]
-  then
-    echo " ${d}${devnim} Filesystem Created successfully"
-  else
-    echo " ${d}${devnim} Filesystem not Found"
-  fi
-done
 
 # Creating Network interfaces for Calico, Neutron and Storage
 echo " Creating Additional Network interfaces"
