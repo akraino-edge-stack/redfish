@@ -65,6 +65,7 @@ for d in $devices
 do
    wipefs -a -f /dev/${d}
    parted -s /dev/${d} mklabel GPT
+   # parted -s -a optimal /dev/${d} -- mkpart primary ext4 1 -1s
 done
 partprobe
 sleep 5 #let udev settle down
@@ -98,12 +99,12 @@ END
     fi
 fi
 
-#Creating Calico Interface
+# Creating Calico Interface
 if [ -n "@@SRV_CALICO_VLAN@@" ]; then
     echo "Configuring Calico Interface in the server"
     tee -a /etc/network/interfaces << END
 
-#CALICO
+# CALICO
 auto $calico
 iface $calico inet static
     address @@SRV_CALICO_IP@@
@@ -125,7 +126,7 @@ if [ -n "@@SRV_NEUTRON_VLAN@@" ]; then
     echo "Configuring Neutron Interface in the server"
     tee -a /etc/network/interfaces << END
 
-#OVERLAY/NEUTRON
+# OVERLAY/NEUTRON
 auto $neutron
 iface $neutron inet static
     address @@SRV_NEUTRON_IP@@
@@ -146,10 +147,10 @@ if [ -n "@@SRV_PXE_INF@@" ]; then
     echo "Configuring PXE Interface in the server"
     tee -a /etc/network/interfaces << END
 
-#OVERLAY/NEUTRON
+# PXE
 auto @@SRV_PXE_INF@@
 iface @@SRV_PXE_INF@@ inet static
-address @@SRV_PXE_IP@@
+    address @@SRV_PXE_IP@@
     netmask 255.255.255.0
     mtu @@SRV_MTU@@
 END
