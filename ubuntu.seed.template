@@ -93,7 +93,7 @@ d-i partman-efi/non_efi_system boolean true
 # The default is to mount by UUID, but you can also choose "traditional" to
 # use traditional device names, or "label" to try filesystem labels before
 # falling back to UUIDs.
-d-i partman/mount_style select uuid
+d-i partman/mount_style select traditional
 
 ### Packages
 
@@ -165,6 +165,8 @@ d-i preseed/late_command string \
     in-target /bin/bash -c 'echo -n -e "    bond-miimon 100\n    bond-slaves @@SRV_SLAVE1@@ @@SRV_SLAVE2@@\n    mtu @@SRV_MTU@@\n\n" >> /etc/network/interfaces'; \
     in-target /bin/bash -c 'echo -n -e "auto @@SRV_BOND@@.@@SRV_VLAN@@\niface @@SRV_BOND@@.@@SRV_VLAN@@ inet static\n    address @@SRV_IP@@\n    netmask @@SRV_NETMASK@@\n" >> /etc/network/interfaces'; \
     in-target /bin/bash -c 'echo -n -e "    gateway @@SRV_GATEWAY@@\n    dns-nameservers @@SRV_DNS@@\n    dns-search @@SRV_DNSSEARCH@@\n    vlan-raw-device @@SRV_BOND@@\n    mtu @@SRV_MTU@@\n" >> /etc/network/interfaces'; \
+    in-target /bin/bash -c 'mkdir -p /root/.ssh'; \
+    in-target /bin/bash -c '/bin/echo "@@SRV_RCKEY@@" >> /root/.ssh/authorized_keys'; \
     in-target /bin/bash -c 'curl --noproxy "*" http://@@BUILD_WEBIP@@:@@BUILD_WEBPORT@@/sources.list > /etc/apt/sources.list'; \
     in-target /bin/bash -c 'curl --noproxy "*" http://@@BUILD_WEBIP@@:@@BUILD_WEBPORT@@/@@SRV_NAME@@.firstboot.sh > /root/@@SRV_NAME@@.firstboot.sh; chmod +x /root/@@SRV_NAME@@.firstboot.sh'; \
     in-target /bin/bash -c 'sed -i "s/GRUB_CMDLINE_LINUX=\"[^\"]*/& @@SRV_KERNEL_PARAMS@@/g" /etc/default/grub'; \
