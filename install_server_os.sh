@@ -100,7 +100,7 @@ fi
 echo "#######################################"
 echo "# USING INPUT FILE [$RCFILE]"
 echo "#######################################"
-sed -E 's/(^.*PWD=).*/\1###PASSWORD REMOVED####/g' $RCFILE
+sed -E 's/(^.*PWD=).*/\1###PASSWORD REMOVED###/g' $RCFILE
 echo "#######################################"
 
 # CHECK A FEW REQUIRED VARIABLES - BUT NOT ALL
@@ -171,6 +171,13 @@ if ! ping -c 3 $SRV_OOB_IP | grep time= ; then
     exit 1;
 fi
 
+## CREATE SSH KEYS IF THEY DO NOT EXIST
+echo "Setting up ssh keys for user [$USER] with home [$HOME]"
+if ! [ -f $HOME/.ssh/id_rsa ]; then
+    echo "  Creating rsa key [$HOME/.ssh/id_rsa]"
+    ssh-keygen -t rsa -f $HOME/.ssh/id_rsa -P ""
+fi
+
 ## COLLECT ANY ADDITIONAL SERVER DATA NEEDED - FOR EXAMPLE, LOOKUP MAC FOR DELL NIC
 SRV_OEM=$(curl --noproxy '*' --insecure https://$SRV_OOB_IP/redfish/v1/ | grep -Poe '(?<="Oem":{")[^"]*(?=")')
 echo "Identified server as OEM [$SRV_OEM] using oob [$SRV_OOB_IP]"
@@ -229,6 +236,7 @@ fi
 
 ## CREATE SERVER SEED FILE
 echo "Creating seed file [$WEB_ROOT/$SRV_NAME.seed] for server [$SRV_NAME]"
+SRV_RCKEY=$(cat ~/.ssh/id_rsa.pub | sed -e 's/[\/&]/\\&/g')
 cp -f $REDFISH_ROOT/ubuntu.seed.template $WEB_ROOT/$SRV_NAME.seed
 
 for VAR in $(set | grep -P "^SRV_|^BUILD_" | cut -f 1 -d'='); do
@@ -386,16 +394,8 @@ fi
 echo "Waiting for server to come back up..."
 (ping -i 5 $SRV_IP &) | awk '{print $0; fflush();} /time=/ {x++; if (x>3) {exit;}}'
 
-## SETUP SSH KEYS
-echo "Setting up ssh keys for user [$USER] with home [$HOME]"
-if ! dpkg -l | grep "sshpass " > /dev/null; then
-    echo "  Installing sshpass"
-    apt-get install -y sshpass 2>&1 || echo "ERROR: sshpass is required to complete the build"; exit 1;
-fi
-if ! [ -f $HOME/.ssh/id_rsa ]; then
-    echo "  Creating rsa key [$HOME/.ssh/id_rsa]"
-    ssh-keygen -t rsa -f $HOME/.ssh/id_rsa -P ""
-fi
+## SETUP KNOW_HOST SSH KEYS
+echo "Setting up ssh access for user [$USER] with home [$HOME]"
 echo "  Removing any old host keys for [$SRV_IP]"
 ls -l $HOME/.ssh/
 chown $USER:$USER $HOME/.ssh/known_hosts
@@ -407,15 +407,10 @@ echo "  Getting new host keys for [$SRV_IP]"
 sleep 5
 ssh-keyscan -t rsa -H $SRV_IP >> $HOME/.ssh/known_hosts
 
-echo "  copying user key to [root@$SRV_IP]"
-sleep 5
-export SSHPASS=$SRV_PWD
-sshpass -e ssh-copy-id -i $HOME/.ssh/id_rsa root@$SRV_IP
-
 ## RUN FIRSTBOOT SCRIPT
 echo "Running first boot script"
 sleep 5
-sshpass -e ssh -i $HOME/.ssh/id_rsa root@$SRV_IP /root/$SRV_NAME.firstboot.sh
+ssh -i $HOME/.ssh/id_rsa root@$SRV_IP /root/$SRV_NAME.firstboot.sh
 if [ "$?" -ne 0 ]; then
     echo "FAILED:  Unable to run firstboot script on new server"
     exit 1
