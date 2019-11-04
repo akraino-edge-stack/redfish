@@ -43,7 +43,7 @@ echo "Checking that docker is running"
 docker ps
 
 echo "Installing sshpass, pip, requests, yaml, jinja2 and xorriso"
-apt-get install -y sshpass python-pip python-requests python-yaml python-jinja2 xorriso  2>&1
+apt-get install -y sshpass python-pip python-requests python-yaml python-jinja2 xorriso isolinux 2>&1
 
 exit
 
