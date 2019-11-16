@@ -22,7 +22,7 @@
     set mynm @@SRV_NETMASK@@
     set mygw @@SRV_GATEWAY@@
     set myinterface interface=@@SRV_SLAVE1@@
-    set mystaticnet netcfg/disable_autoconfig=true netcfg/vlan_id=@@SRV_VLAN@@ netcfg/get_ipaddress=@@SRV_IP@@ netcfg/get_netmask=@@SRV_NETMASK@@ netcfg/get_gateway=@@SRV_GATEWAY@@ netcfg/get_nameservers=@@SRV_DNS@@ netcfg/get_domain=@@SRV_DOMAIN@@ netcfg/confirm_static=true
+    set mystaticnet netcfg/disable_autoconfig=true netcfg/vlan_id=@@SRV_VLAN@@ netcfg/get_ipaddress=@@SRV_IP@@ netcfg/get_netmask=@@SRV_NETMASK@@ netcfg/get_gateway=@@SRV_GATEWAY@@ netcfg/get_nameservers="@@SRV_DNS@@" netcfg/get_domain=@@SRV_DOMAIN@@ netcfg/confirm_static=true
     set ramdisk root=/dev/ram0 load_ramdisk=1 ramdisk_size=524288
     set iname initrd-@@SRV_OSVER@@
     set uroot ubuntu-@@SRV_OSWEB_DIR@@
