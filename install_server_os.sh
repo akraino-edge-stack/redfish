@@ -31,9 +31,9 @@ UBUNTU_ISO=${UBUNTU_ISO:-}  ## IF NOT SET, UBUNTU_URL WILL BE USED TO DOWNLOAD D
 LOGDIR="/var/log/akraino"
 mkdir -p $LOGDIR
 LOGFILE="$LOGDIR/$(basename $0|cut -d. -f1)_$(date +'%FT%H-%M-%S%z')"
-echo "logging to $LOGFILE"
-exec 1> >(tee -a $LOGFILE)
-exec 2>&1
+#echo "logging to $LOGFILE"
+#exec 1> >(tee -a $LOGFILE)
+#exec 2>&1
 
 echo "Beginning $0 as user [$USER] in pwd [$PWD] with home [$HOME]"
 
@@ -432,8 +432,8 @@ echo "SUCCESS:  Try connecting with 'ssh root@$SRV_IP' as user $USER"
 echo "Elapsed time was $(( ($ENDTIME - $STARTTIME) / 60 )) minutes and $(( ($ENDTIME - $STARTTIME) % 60 )) seconds"
 
 ## CLOSE REDIRECTED IO
-exec 2>&-
-exec 1>&-
+#exec 2>&-
+#exec 1>&-
 
 exit 0
 
