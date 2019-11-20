@@ -21,8 +21,14 @@ echo "### BUILDING SERVER [$HOSTNAME]"
 echo " "
 
 echo "Updating available packages"
-apt-get update 
+apt-get update -q 2>&1
 apt-get install -y --install-recommends linux-generic-hwe-16.04 ipmitool
+
+echo "Updating snmp logging level"
+sed -i "s|-Lsd|-LS6d|" /etc/default/snmpd
+sed -i "s|-Lsd|-LS6d|" /etc/init.d/snmpd
+systemctl daemon-reload
+systemctl restart snmpd
 
 echo "Checking for hugepages"
 if grep hugepages /proc/cmdline ; then

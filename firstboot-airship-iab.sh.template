@@ -14,11 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Add proxy settings if required for your environment
-#
-#export http_proxy=http://your.proxy.com:8080/
-#export https_proxy=http://your.proxy.com:8080/
-
 HOSTNAME=$(hostname -s)
 echo "### BEGINING FIRSTBOOT SCRIPT ###" "[`date`]"
 echo " "
@@ -26,7 +21,13 @@ echo "### BUILDING SERVER [$HOSTNAME]"
 echo " "
 
 echo "Updating available packages"
-apt-get update 
+apt-get update -q 2>&1
+
+echo "Updating snmp logging level"
+sed -i "s|-Lsd|-LS6d|" /etc/default/snmpd
+sed -i "s|-Lsd|-LS6d|" /etc/init.d/snmpd
+systemctl daemon-reload
+systemctl restart snmpd
 
 exit
 
