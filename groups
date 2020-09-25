@@ -2,4 +2,3 @@
 #
 0706f97cf3b2243094a8f24452092769b1065db0                                   	GitHub Replication
 ee8772409f09b30a773e7afb09d9c2708e2a1326                                   	saml/akraino-gerrit-redfish-committers
-ldap:cn=akraino-gerrit-redfish-committers,ou=Groups,dc=freestandards,dc=org	ldap/akraino-gerrit-redfish-committers
